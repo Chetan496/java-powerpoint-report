@@ -40,6 +40,9 @@ class SlideShowTemplate {
     private final ImmutablePair<XSLFChart, CTGraphicalObjectFrame> doughnutChart;
     /** An xy scatterplot chart XML object, cached so we can clone it.  */
     private final ImmutablePair<XSLFChart, CTGraphicalObjectFrame> graphChart;
+    
+    /** A column chart **/
+    private final ImmutablePair<XSLFChart, CTGraphicalObjectFrame> columnChart;
 
     SlideShowTemplate(final InputStream inputStream) throws TemplateLoadException {
         try {
@@ -65,8 +68,11 @@ class SlideShowTemplate {
             if (ArrayUtils.isEmpty(graphChart.getLeft().getCTChart().getPlotArea().getScatterChartArray())) {
                 throw new TemplateLoadException("Second slide has the wrong chart type, should have a time-axis xy scatterplot chart");
             }
+            
+            columnChart = getChart(slides.get(2), "Third slide should have a column chart with 3 series and categories");
 
             // Remove the slides afterwards
+            pptx.removeSlide(2);
             pptx.removeSlide(1);
             pptx.removeSlide(0);
         }
@@ -103,6 +109,9 @@ class SlideShowTemplate {
         return graphChart.getLeft();
     }
 
+    
+    
+    
     /**
      * Creates a new clone of the scatterplot chart XML from the second slide, for inclusion into a slide's shapes.
      * @param relId the relation id to the chart.
@@ -115,11 +124,33 @@ class SlideShowTemplate {
         return cloneShapeXML(graphChart.getRight(), relId, shapeId, shapeName, anchor);
     }
 
+    
+    
+    XSLFChart getColumnChart() {
+    	return columnChart.getLeft();
+    }
+    
+    
+
+    /**
+     * Creates a new clone of the column chart XML from the third slide, for inclusion into a slide's shapes.
+     * @param relId the relation id to the chart.
+     * @param shapeId the shape id of the new shape.
+     * @param shapeName the name of your choice for the shape.
+     * @param anchor where the shape should be positioned on screen, or null to use the same position as the cloned chart.
+     * @return a new clone of the column chart XML.
+     */
+    CTGraphicalObjectFrame getColumnhChartShapeXML(final String relId, final int shapeId, final String shapeName, final Rectangle2D.Double anchor) {
+        return cloneShapeXML(columnChart.getRight(), relId, shapeId, shapeName, anchor);
+    }
+    
+    
     /**
      * Get the template presentation with all slides removed.
      * @return the template presentation without any slides.
      */
     XMLSlideShow getSlideShow() {
+    
         return pptx;
     }
 

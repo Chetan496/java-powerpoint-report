@@ -5,6 +5,7 @@
 
 package com.hp.autonomy.frontend.reports.powerpoint.dto;
 
+
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import lombok.AllArgsConstructor;
@@ -64,7 +65,8 @@ public class ReportData {
                 @JsonSubTypes.Type(name = "sunburst", value = SunburstData.class),
                 @JsonSubTypes.Type(name = "table", value = TableData.class),
                 @JsonSubTypes.Type(name = "text", value = TextData.class),
-                @JsonSubTypes.Type(name = "topicmap", value = TopicMapData.class)
+                @JsonSubTypes.Type(name = "topicmap", value = TopicMapData.class),
+                @JsonSubTypes.Type(name = "column", value = ColumnData.class )
         })
         private ComposableElement data;
     }

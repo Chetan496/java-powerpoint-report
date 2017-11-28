@@ -6,6 +6,7 @@
 package com.hp.autonomy.frontend.reports.powerpoint;
 
 import com.hp.autonomy.frontend.reports.powerpoint.dto.Anchor;
+import com.hp.autonomy.frontend.reports.powerpoint.dto.ColumnData;
 import com.hp.autonomy.frontend.reports.powerpoint.dto.ComposableElement;
 import com.hp.autonomy.frontend.reports.powerpoint.dto.DategraphData;
 import com.hp.autonomy.frontend.reports.powerpoint.dto.ListData;
@@ -433,8 +434,46 @@ public class PowerPointServiceImpl implements PowerPointService {
 
         return ppt;
     }
+    
+    
+    @Override
+	public XMLSlideShow column(ColumnData columnData) throws TemplateLoadException {
+    	
+    	if( !columnData.validateInput() ) {
+    		throw new IllegalArgumentException("Number of seriesdata should match the number of categories");
+    	}
+    	
+    	final SlideShowTemplate template = loadTemplate();
+        final XMLSlideShow ppt = template.getSlideShow();
+        final XSLFSlide slide = ppt.createSlide();
+        
+        final int shapeId = 1;
+        
+        addColumnChart(template,  slide, null, columnData , shapeId, "relId" + shapeId) ;
+        
+    	
+		return null;
+	}
 
     /**
+     * Internal implementation to add a clustered column chart to a slide, based on a template
+     * @param template the parsed template information.
+     * @param slide  the slide to add to.
+     * @param anchoroptional bounding rectangle to draw onto, in PowerPoint coordinates.
+     *               If null, we'll use the bounds from the original template chart.
+     * @param columnData, the clusetered column data
+     * @param shapeId. the slide shape ID, should be unique within the slide.
+     * @param relId. the relation ID to the chart data.
+     * @throws TemplateLoadException if we can't create the ColumnData; most likely due to an invalid template.
+     */
+    private void addColumnChart(final SlideShowTemplate template, final XSLFSlide slide, final Rectangle2D.Double anchor,
+    		final ColumnData columnData, final int shapeId, final String relId) throws TemplateLoadException {
+		
+    	
+		
+	}
+
+	/**
      * Internal implementation to add a sunburst chart (actually a doughnut chart) to a slide, based on a template.
      * @param template the parsed template information.
      * @param slide the slide to add to.
@@ -445,18 +484,25 @@ public class PowerPointServiceImpl implements PowerPointService {
      * @param relId the relation ID to the chart data.
      * @throws TemplateLoadException if we can't create the sunburst; most likely due to an invalid template.
      */
-    private static void addSunburst(final SlideShowTemplate template, final XSLFSlide slide, final Rectangle2D.Double anchor, final SunburstData data, final int shapeId, final String relId) throws TemplateLoadException {
+    private static void addSunburst(final SlideShowTemplate template, final XSLFSlide slide, final Rectangle2D.Double anchor,
+    		final SunburstData data, final int shapeId, final String relId) throws TemplateLoadException {
+    	
+    	/*unwrap the data passed which should be used to populate our chart */
         final String[] categories = data.getCategories();
         final double[] values = data.getValues();
         final String title = data.getTitle();
 
+        /*add a new graphic Frame */
         slide.getXmlObject().getCSld().getSpTree().addNewGraphicFrame().set(template.getDoughnutChartShapeXML(relId, shapeId, "chart" + shapeId, anchor));
 
+        /*Sheet created */
         final XSSFWorkbook workbook = new XSSFWorkbook();
         final XSSFSheet sheet = workbook.createSheet();
-
+        
+        /*get base chart from template */
         final XSLFChart baseChart = template.getDoughnutChart();
-
+        
+        /*we now created a copy of the chart openxml object */
         final CTChartSpace chartSpace = (CTChartSpace) baseChart.getCTChartSpace().copy();
         final CTChart ctChart = chartSpace.getChart();
         final CTPlotArea plotArea = ctChart.getPlotArea();
@@ -468,7 +514,8 @@ public class PowerPointServiceImpl implements PowerPointService {
 
             ctChart.unsetTitle();
         }
-
+        
+       
         final CTDoughnutChart donutChart = plotArea.getDoughnutChartArray(0);
 
         final CTPieSer series = donutChart.getSerArray(0);
@@ -587,6 +634,8 @@ public class PowerPointServiceImpl implements PowerPointService {
             row.createCell(0).setCellValue(categories[idx]);
             row.createCell(1).setCellValue(values[idx]);
         }
+        //loop ends
+        
         categoryData.getPtCount().setVal(categories.length);
         numericData.getPtCount().setVal(values.length);
 
@@ -601,6 +650,7 @@ public class PowerPointServiceImpl implements PowerPointService {
         }
     }
 
+    
     private static void unsetLineFills(final CTLineProperties ln) {
         if (ln.isSetSolidFill()) {
             ln.unsetSolidFill();
@@ -757,11 +807,14 @@ public class PowerPointServiceImpl implements PowerPointService {
             else {
                 tableH = nextH;
             }
+            
+            
         }
 
         final double width = Math.min(tableW, availWidth);
 
         table.setAnchor(new Rectangle2D.Double(anchor.getMinX() + 0.5 * (availWidth - width), anchor.getMinY(), width, Math.min(tableH, anchor.getHeight())));
+      
     }
 
     @Override
@@ -1201,7 +1254,8 @@ public class PowerPointServiceImpl implements PowerPointService {
      * @param relId the relation ID to the chart data.
      * @throws TemplateLoadException if we can't create the date graph; most likely due to an invalid template.
      */
-    private static void addDategraph(final SlideShowTemplate template, final XSLFSlide slide, final Rectangle2D.Double anchor, final DategraphData data, final int shapeId, final String relId) throws TemplateLoadException {
+    private static void addDategraph(final SlideShowTemplate template, final XSLFSlide slide, final Rectangle2D.Double anchor, 
+    		final DategraphData data, final int shapeId, final String relId) throws TemplateLoadException {
         if (!data.validateInput()) {
             throw new IllegalArgumentException("Invalid data provided");
         }
@@ -1681,4 +1735,6 @@ public class PowerPointServiceImpl implements PowerPointService {
             chartPart.addRelationship(name, TargetMode.INTERNAL, part.getRelationship().getRelationshipType());
         }
     }
+
+	
 }

@@ -5,6 +5,7 @@
 
 package com.hp.autonomy.frontend.reports.powerpoint;
 
+import com.hp.autonomy.frontend.reports.powerpoint.dto.ColumnData;
 import com.hp.autonomy.frontend.reports.powerpoint.dto.DategraphData;
 import com.hp.autonomy.frontend.reports.powerpoint.dto.ListData;
 import com.hp.autonomy.frontend.reports.powerpoint.dto.MapData;
@@ -26,6 +27,16 @@ public interface PowerPointService {
      */
     void validateTemplate() throws TemplateLoadException;
 
+    /**
+     * Renders a topic map as a PowerPoint presentation.
+     * @param topicmap the data representing the topic map paths.
+     * @return a PowerPoint presentation with a single slide.
+     * @throws TemplateLoadException if the template is invalid.
+     */
+    XMLSlideShow column(ColumnData columnData) throws TemplateLoadException;
+
+    
+    
     /**
      * Renders a topic map as a PowerPoint presentation.
      * @param topicmap the data representing the topic map paths.
