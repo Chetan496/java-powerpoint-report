@@ -122,6 +122,8 @@ import org.openxmlformats.schemas.presentationml.x2006.main.STTLTimeNodeType;
 import org.openxmlformats.schemas.presentationml.x2006.main.STTLTriggerEvent;
 import org.openxmlformats.schemas.presentationml.x2006.main.STTLTriggerRuntimeNode;
 import org.openxmlformats.schemas.presentationml.x2006.main.impl.STTLTimeNodeRestartTypeImpl;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.hp.autonomy.frontend.reports.powerpoint.dto.ListData.Document;
 import static com.hp.autonomy.frontend.reports.powerpoint.dto.MapData.Marker;
@@ -132,6 +134,8 @@ import static org.apache.poi.POIXMLTypeLoader.DEFAULT_XML_OPTIONS;
  * @see <a href="https://github.com/hpe-idol/java-powerpoint-report/" target="_blank">README.md</a> for examples and usage instructions.
  */
 public class PowerPointServiceImpl implements PowerPointService {
+	
+	final  static Logger logger = LoggerFactory.getLogger(PowerPointService.class);
 
     /** The source for the template file. */
     private final TemplateSource pptxTemplate;
@@ -434,6 +438,7 @@ public class PowerPointServiceImpl implements PowerPointService {
 
         return ppt;
     }
+    
     
     
     @Override
@@ -1703,37 +1708,64 @@ public class PowerPointServiceImpl implements PowerPointService {
      * @throws IOException if there's IO errors working with the chart.
      * @throws InvalidFormatException if there's errors generating new package part names for the new copies of the data.
      */
-    private static void writeChart(final XMLSlideShow pptx, final XSLFSlide slide, final XSLFChart templateChart, final CTChartSpace modifiedChart, final XSSFWorkbook workbook, final String relId) throws IOException, InvalidFormatException {
+    private static void writeChart(final XMLSlideShow pptx, final XSLFSlide slide, 
+    		final XSLFChart templateChart, final CTChartSpace modifiedChart,
+    		final XSSFWorkbook workbook, final String relId) throws IOException, InvalidFormatException {
+    	
         final OPCPackage opcPackage = pptx.getPackage();
-        final PackagePartName chartName = generateNewName(opcPackage, templateChart.getPackagePart().getPartName().getURI().getPath());
+        
+        //this is the package part name for the new chart - should return /ppt/charts/chart1.xml
+        final PackagePartName chartName = generateNewName(opcPackage,  templateChart.getPackagePart().getPartName().getURI().getPath());
+        
+        logger.info("chartName is "+chartName);
+        
 
+        //write the complete chart xml inside c:chartSpace so that this can be saved
         final ByteArrayOutputStream baos = new ByteArrayOutputStream();
         XmlOptions xmlOptions = new XmlOptions(DEFAULT_XML_OPTIONS);
         xmlOptions.setSaveSyntheticDocumentElement(new QName(CTChartSpace.type.getName().getNamespaceURI(), "chartSpace", "c"));
         modifiedChart.save(baos, xmlOptions);
-
+        
         final PackagePart chartPart = opcPackage.createPart(chartName, XSLFRelation.CHART.getContentType(), baos);
 
+        //add the relation between this chart part and the slide
         slide.getPackagePart().addRelationship(chartName, TargetMode.INTERNAL, XSLFRelation.CHART.getRelation(), relId);
 
+        //loop through all parts of the chart from template 
+        //if there is an excel part associated (found  by contenttype)
+        //then copy the workbook data (data which was used to generate the modified chart) to partCopy
+        //otherwise if its a different part(not a workbook), then just copy it as it is from corresponding part of the template chart
         for(final POIXMLDocumentPart.RelationPart part : templateChart.getRelationParts()) {
+        	
             final ByteArrayOutputStream partCopy = new ByteArrayOutputStream();
             final URI targetURI = part.getRelationship().getTargetURI();
 
-            final PackagePartName name = generateNewName(opcPackage, targetURI.getPath());
-
             final String contentType = part.getDocumentPart().getPackagePart().getContentType();
 
+            PackagePartName name ;
+            
             if("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet".equals(contentType)) {
                 workbook.write(partCopy);
+                name = generateNewName(opcPackage, targetURI.getPath()+"_chart");
+                
+                opcPackage.createPart(name, contentType, partCopy);   //breaking here
+                chartPart.addRelationship(name, TargetMode.INTERNAL, part.getRelationship().getRelationshipType());
             }
             else {
                 IOUtils.copy(part.getDocumentPart().getPackagePart().getInputStream(), partCopy);
+                name = generateNewName(opcPackage, targetURI.getPath());
+                
+                opcPackage.createPart(name, contentType, partCopy);   
+                chartPart.addRelationship(name, TargetMode.INTERNAL, part.getRelationship().getRelationshipType());
             }
+            
+            
+            logger.info("part name "+name); 
+            
 
-            opcPackage.createPart(name, contentType, partCopy);
-            chartPart.addRelationship(name, TargetMode.INTERNAL, part.getRelationship().getRelationshipType());
         }
+        
+        
     }
 
 	

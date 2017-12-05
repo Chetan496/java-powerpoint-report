@@ -51,7 +51,7 @@ class SlideShowTemplate {
 
             final List<XSLFSlide> slides = pptx.getSlides();
 
-            if (slides.size() != 2) {
+            if (slides.size() != 3) {
                 throw new TemplateLoadException("Template powerpoint should have two slides, doughnut chart on slide 1 and time-axis xy scatterplot chart on slide 2");
             }
 

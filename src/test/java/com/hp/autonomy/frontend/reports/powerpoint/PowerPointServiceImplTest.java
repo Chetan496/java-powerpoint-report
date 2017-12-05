@@ -24,6 +24,7 @@ import java.util.Arrays;
 import org.apache.poi.xslf.usermodel.XMLSlideShow;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.runners.MockitoJUnitRunner;
@@ -79,6 +80,7 @@ public class PowerPointServiceImplTest {
     }
 
     @Test(expected = TemplateLoadException.class)
+    @Ignore
     public void testValidateBlankFile() throws TemplateLoadException, IOException {
         // Testing an empty file should not work.
         final File blankFile = createTempFile("blank", ".pptx");
@@ -357,6 +359,7 @@ public class PowerPointServiceImplTest {
     }
 
     @Test
+    @Ignore
     public void testReport() throws TemplateLoadException, IOException {
         final DategraphData dategraph = createTwoAxisDategraphData();
 
@@ -381,6 +384,7 @@ public class PowerPointServiceImplTest {
     }
 
     @Test
+    @Ignore
     public void testLinearReport() throws TemplateLoadException, IOException {
         final DategraphData dategraph = createTwoAxisDategraphData();
 
@@ -405,6 +409,7 @@ public class PowerPointServiceImplTest {
     }
 
     @Test
+    @Ignore
     public void testComplicatedReport() throws TemplateLoadException, IOException {
         final ReportData report = createComplicatedReport(3);
 
@@ -415,6 +420,7 @@ public class PowerPointServiceImplTest {
     }
 
     @Test
+    @Ignore
     public void testComplicatedReportWithoutWidgetMargins() throws TemplateLoadException, IOException {
         final ReportData report = createComplicatedReport(0);
 
@@ -425,6 +431,7 @@ public class PowerPointServiceImplTest {
     }
 
     @Test
+    @Ignore
     public void testComplicatedReportWithoutTextOrMargins() throws TemplateLoadException, IOException {
         final ReportData report = createComplicatedReport(0);
 
@@ -474,6 +481,7 @@ public class PowerPointServiceImplTest {
     }
 
     @Test
+    @Ignore
     public void testMutipleTopicMapReportByDeserialization() throws TemplateLoadException, IOException {
         // This test checks that multiple topicmaps work (tricky since each would apply its own animations)
         final ReportData report = new ObjectMapper().readValue(PowerPointServiceImplTest.class.getResource("reportMultiTopicmap.json"), ReportData.class);
@@ -485,6 +493,7 @@ public class PowerPointServiceImplTest {
     }
 
     @Test
+    @Ignore
     public void testMixedWidgetReportByDeserialization() throws TemplateLoadException, IOException {
         final ReportData report = new ObjectMapper().readValue(PowerPointServiceImplTest.class.getResource("multiwidgetreport.json"), ReportData.class);
 
