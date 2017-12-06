@@ -66,7 +66,8 @@ public class ReportData {
                 @JsonSubTypes.Type(name = "table", value = TableData.class),
                 @JsonSubTypes.Type(name = "text", value = TextData.class),
                 @JsonSubTypes.Type(name = "topicmap", value = TopicMapData.class),
-                @JsonSubTypes.Type(name = "column", value = BarData.class )
+                @JsonSubTypes.Type(name = "bar", value = BarData.class ),
+                @JsonSubTypes.Type(name = "pie", value = PieChartData.class )
         })
         private ComposableElement data;
     }

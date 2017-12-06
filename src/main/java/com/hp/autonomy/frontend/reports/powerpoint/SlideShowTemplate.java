@@ -41,8 +41,10 @@ class SlideShowTemplate {
     /** An xy scatterplot chart XML object, cached so we can clone it.  */
     private final ImmutablePair<XSLFChart, CTGraphicalObjectFrame> graphChart;
     
-    /** A column chart **/
+    /** A column/bar chart **/
     private final ImmutablePair<XSLFChart, CTGraphicalObjectFrame> barChart;
+    
+    private final ImmutablePair<XSLFChart, CTGraphicalObjectFrame> pieChart;
 
     SlideShowTemplate(final InputStream inputStream) throws TemplateLoadException {
         try {
@@ -51,8 +53,9 @@ class SlideShowTemplate {
 
             final List<XSLFSlide> slides = pptx.getSlides();
 
-            if (slides.size() != 3) {
-                throw new TemplateLoadException("Template powerpoint should have two slides, doughnut chart on slide 1 and time-axis xy scatterplot chart on slide 2");
+            if (slides.size() != 4) {
+                throw new TemplateLoadException("Template powerpoint should have three slides, doughnut chart on slide 1 "
+                		+ ",time-axis xy scatterplot chart on slide 2, a bar/column chart on slide3");
             }
 
             XSLFSlide slide = slides.get(0);
@@ -70,8 +73,18 @@ class SlideShowTemplate {
             }
             
             barChart = getChart(slides.get(2), "Third slide should have a column chart with 3 series and categories");
+            
+            if (ArrayUtils.isEmpty(barChart.getLeft().getCTChart().getPlotArea().getBarChartArray())) {
+                throw new TemplateLoadException("Third slide has the wrong chart type, should have a bar/column chart");
+            }
+            
+            pieChart = getChart(slides.get(3), "Fourth chart should have a pie chart" );
+            if (ArrayUtils.isEmpty(pieChart.getLeft().getCTChart().getPlotArea().getPieChartArray())) {
+                throw new TemplateLoadException("Fourth slide has the wrong chart type, should have a pie chart");
+            }
 
             // Remove the slides afterwards
+            pptx.removeSlide(3);
             pptx.removeSlide(2);
             pptx.removeSlide(1);
             pptx.removeSlide(0);
@@ -82,7 +95,7 @@ class SlideShowTemplate {
     }
 
     /**
-     * Get the doughnut chart from the first slide. Do not modify this object.
+     * Get the doughnut chart from the first slide of the template. Do not modify this object.
      * @return the doughnut chart from the first slide
      */
     XSLFChart getDoughnutChart() {
@@ -100,17 +113,28 @@ class SlideShowTemplate {
     CTGraphicalObjectFrame getDoughnutChartShapeXML(final String relId, final int shapeId, final String shapeName, final Rectangle2D.Double anchor) {
         return cloneShapeXML(doughnutChart.getRight(), relId, shapeId, shapeName, anchor);
     }
+    
+    
+    CTGraphicalObjectFrame getPieChartShapeXML(final String relId, final int shapeId, final String shapeName, final Rectangle2D.Double anchor) {
+    	return cloneShapeXML( pieChart.getRight() ,relId, shapeId, shapeName, anchor );
+    }
+    
 
     /**
-     * Get the graph xy scatterplot chart from the second slide. Do not modify this object.
+     * Get the graph xy scatterplot chart from the second slide of the template. Do not modify this object.
      * @return the graph xy scatterplot chart from the second slide
      */
     XSLFChart getGraphChart() {
         return graphChart.getLeft();
     }
 
-    
-    
+    /**
+     * Get the pie chart from the fourth slide of the template. Do not modify this object
+     * @return the Pie Chart from the fourth slide.
+     */
+    XSLFChart getPieChart() {
+    	return pieChart.getLeft();
+    }
     
     /**
      * Creates a new clone of the scatterplot chart XML from the second slide, for inclusion into a slide's shapes.
@@ -125,7 +149,10 @@ class SlideShowTemplate {
     }
 
     
-    
+    /**
+     * Gets the bar/column chart from the third slide of the template. Do not modify this object.
+     * @return The column/bar chart from the third slide.
+     */
     XSLFChart getBarChart() {
     	return barChart.getLeft();
     }

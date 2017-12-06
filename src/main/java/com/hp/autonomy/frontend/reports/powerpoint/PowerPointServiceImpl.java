@@ -11,6 +11,7 @@ import com.hp.autonomy.frontend.reports.powerpoint.dto.ComposableElement;
 import com.hp.autonomy.frontend.reports.powerpoint.dto.DategraphData;
 import com.hp.autonomy.frontend.reports.powerpoint.dto.ListData;
 import com.hp.autonomy.frontend.reports.powerpoint.dto.MapData;
+import com.hp.autonomy.frontend.reports.powerpoint.dto.PieChartData;
 import com.hp.autonomy.frontend.reports.powerpoint.dto.ReportData;
 import com.hp.autonomy.frontend.reports.powerpoint.dto.SunburstData;
 import com.hp.autonomy.frontend.reports.powerpoint.dto.TableData;
@@ -228,7 +229,52 @@ public class PowerPointServiceImpl implements PowerPointService {
         return new Rectangle2D.Double(availW * anchor.getX(), availH * anchor.getY(), availW * anchor.getWidth(), availH * anchor.getHeight());
     }
 
+    
     @Override
+    public XMLSlideShow pie(final PieChartData pieChartData)  throws  TemplateLoadException {
+    	final SlideShowTemplate template = loadTemplate();
+    	
+    	final XMLSlideShow ppt = template.getSlideShow();
+        final XSLFSlide slide = ppt.createSlide();
+        
+        
+        final int shapeId = 1;
+        
+        addPieChart(template,  slide, null, pieChartData , shapeId, "relId" + shapeId) ;
+        
+        return ppt;
+    }
+    
+    
+    
+    
+    /**
+     * Internal implementation to add a sunburst chart (actually a doughnut chart) to a slide, based on a template.
+     * @param template the parsed template information.
+     * @param slide the slide to add to.
+     * @param anchor optional bounding rectangle to draw onto, in PowerPoint coordinates.
+     *               If null, we'll use the bounds from the original template chart.
+     * @param data the piechart data.
+     * @param shapeId the slide shape ID, should be unique within the slide.
+     * @param relId the relation ID to the chart data.
+     * @throws TemplateLoadException if we can't create the piechart; most likely due to an invalid template.
+     */
+    private void addPieChart(final SlideShowTemplate template, 
+    		XSLFSlide slide, 
+    		final Rectangle2D.Double anchor, 
+    		final PieChartData pieChartData,
+			final int shapeId, final String relId) {
+		
+    	
+    	
+		
+	}
+    
+    
+    
+    
+
+	@Override
     public XMLSlideShow topicmap(
             final TopicMapData topicmap
     ) throws TemplateLoadException {
@@ -1727,6 +1773,12 @@ public class PowerPointServiceImpl implements PowerPointService {
             }
             else if (data instanceof TextData) {
                 addTextData(slide, anchor, (TextData) data);
+            }else if ( data instanceof BarData ) {
+            	addBarChart(template, slide, anchor, (BarData) data, shapeId, "relId" + shapeId);
+            	shapeId++;
+            }else if (data instanceof PieChartData) {
+            	addPieChart(template, slide, anchor, (PieChartData) data, shapeId, "relId" + shapeId);
+            	shapeId++;
             }
 
             if (slidePerVisualizer) {

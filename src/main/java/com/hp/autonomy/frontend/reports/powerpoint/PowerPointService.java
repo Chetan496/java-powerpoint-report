@@ -9,6 +9,7 @@ import com.hp.autonomy.frontend.reports.powerpoint.dto.BarData;
 import com.hp.autonomy.frontend.reports.powerpoint.dto.DategraphData;
 import com.hp.autonomy.frontend.reports.powerpoint.dto.ListData;
 import com.hp.autonomy.frontend.reports.powerpoint.dto.MapData;
+import com.hp.autonomy.frontend.reports.powerpoint.dto.PieChartData;
 import com.hp.autonomy.frontend.reports.powerpoint.dto.ReportData;
 import com.hp.autonomy.frontend.reports.powerpoint.dto.SunburstData;
 import com.hp.autonomy.frontend.reports.powerpoint.dto.TableData;
@@ -36,6 +37,14 @@ public interface PowerPointService {
     XMLSlideShow bar(BarData barData) throws TemplateLoadException;
 
     
+    
+    /**
+     * Renders a pie chart as a powerpoint presentation.
+     * @param pieChartData The Piechartdata to use to render the pie chart
+     * @return a PowerPoint presentation with a single slide.
+     * @throws TemplateLoadException if the template is invalid.
+     */
+    XMLSlideShow pie(PieChartData pieChartData) throws TemplateLoadException;
     
     /**
      * Renders a topic map as a PowerPoint presentation.

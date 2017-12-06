@@ -448,7 +448,7 @@ public class TestPPTGen {
 	    barData.setSeriesData( new ArrayList<BarData.Series>( Arrays.asList(
 	    		   new BarData.Series("Red", "series1", new double[] { 1.0, 2.0 }),
 	    		   new BarData.Series("Blue", "series2", new double[] { 1.0, 3.0 }),
-	    		   new BarData.Series("Green", "series2", new double[] { 1.0, 2.5 })
+	    		   new BarData.Series("Green", "series3", new double[] { 1.0, 2.5 })
 	    		
 	    		) ));
 	    
