@@ -12,9 +12,10 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class ColumnData implements ComposableElement {
+public class BarData implements ComposableElement {
 
 	private String[] categoryLabels;
+	private boolean isColumnChart; //if true this will become a column chart
 	
 	/* total values in series array = length(categories) */
 	private List<Series> seriesData ;

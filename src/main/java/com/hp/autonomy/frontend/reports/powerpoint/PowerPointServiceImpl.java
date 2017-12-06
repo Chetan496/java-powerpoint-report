@@ -6,7 +6,7 @@
 package com.hp.autonomy.frontend.reports.powerpoint;
 
 import com.hp.autonomy.frontend.reports.powerpoint.dto.Anchor;
-import com.hp.autonomy.frontend.reports.powerpoint.dto.ColumnData;
+import com.hp.autonomy.frontend.reports.powerpoint.dto.BarData;
 import com.hp.autonomy.frontend.reports.powerpoint.dto.ComposableElement;
 import com.hp.autonomy.frontend.reports.powerpoint.dto.DategraphData;
 import com.hp.autonomy.frontend.reports.powerpoint.dto.ListData;
@@ -49,6 +49,7 @@ import org.apache.poi.sl.usermodel.TableCell;
 import org.apache.poi.sl.usermodel.TextParagraph;
 import org.apache.poi.sl.usermodel.TextShape;
 import org.apache.poi.sl.usermodel.VerticalAlignment;
+import org.apache.poi.ss.SpreadsheetVersion;
 import org.apache.poi.ss.usermodel.CellStyle;
 import org.apache.poi.ss.util.AreaReference;
 import org.apache.poi.ss.util.CellRangeAddress;
@@ -73,6 +74,9 @@ import org.apache.poi.xssf.usermodel.XSSFRow;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.apache.xmlbeans.XmlOptions;
+import org.openxmlformats.schemas.drawingml.x2006.chart.CTAxDataSource;
+import org.openxmlformats.schemas.drawingml.x2006.chart.CTBarChart;
+import org.openxmlformats.schemas.drawingml.x2006.chart.CTBarSer;
 import org.openxmlformats.schemas.drawingml.x2006.chart.CTChart;
 import org.openxmlformats.schemas.drawingml.x2006.chart.CTChartSpace;
 import org.openxmlformats.schemas.drawingml.x2006.chart.CTDPt;
@@ -81,12 +85,14 @@ import org.openxmlformats.schemas.drawingml.x2006.chart.CTLegend;
 import org.openxmlformats.schemas.drawingml.x2006.chart.CTLegendEntry;
 import org.openxmlformats.schemas.drawingml.x2006.chart.CTMarker;
 import org.openxmlformats.schemas.drawingml.x2006.chart.CTNumData;
+import org.openxmlformats.schemas.drawingml.x2006.chart.CTNumDataSource;
 import org.openxmlformats.schemas.drawingml.x2006.chart.CTNumRef;
 import org.openxmlformats.schemas.drawingml.x2006.chart.CTNumVal;
 import org.openxmlformats.schemas.drawingml.x2006.chart.CTPieSer;
 import org.openxmlformats.schemas.drawingml.x2006.chart.CTPlotArea;
 import org.openxmlformats.schemas.drawingml.x2006.chart.CTScatterChart;
 import org.openxmlformats.schemas.drawingml.x2006.chart.CTScatterSer;
+import org.openxmlformats.schemas.drawingml.x2006.chart.CTSerTx;
 import org.openxmlformats.schemas.drawingml.x2006.chart.CTStrData;
 import org.openxmlformats.schemas.drawingml.x2006.chart.CTStrRef;
 import org.openxmlformats.schemas.drawingml.x2006.chart.CTStrVal;
@@ -442,9 +448,9 @@ public class PowerPointServiceImpl implements PowerPointService {
     
     
     @Override
-	public XMLSlideShow column(ColumnData columnData) throws TemplateLoadException {
+	public XMLSlideShow bar(BarData barData) throws TemplateLoadException {
     	
-    	if( !columnData.validateInput() ) {
+    	if( !barData.validateInput() ) {
     		throw new IllegalArgumentException("Number of seriesdata should match the number of categories");
     	}
     	
@@ -454,28 +460,170 @@ public class PowerPointServiceImpl implements PowerPointService {
         
         final int shapeId = 1;
         
-        addColumnChart(template,  slide, null, columnData , shapeId, "relId" + shapeId) ;
+        addBarChart(template,  slide, null, barData , shapeId, "relId" + shapeId) ;
         
     	
-		return null;
+		return ppt;
+	}
+    
+    
+    private static XSSFRow createOrGetRow(XSSFSheet sheet, int rownum) {
+
+		if (sheet.getRow(rownum) == null) {
+			return sheet.createRow(rownum);
+		}
+
+		return sheet.getRow(rownum);
 	}
 
     /**
-     * Internal implementation to add a clustered column chart to a slide, based on a template
+     * Internal implementation to add a clustered column chart to a slide, based on a template.
+     * The max number of allowed series is equal to number of series in the template.
      * @param template the parsed template information.
      * @param slide  the slide to add to.
      * @param anchoroptional bounding rectangle to draw onto, in PowerPoint coordinates.
      *               If null, we'll use the bounds from the original template chart.
-     * @param columnData, the clusetered column data
+     * @param columnData, the clustered column data
      * @param shapeId. the slide shape ID, should be unique within the slide.
      * @param relId. the relation ID to the chart data.
      * @throws TemplateLoadException if we can't create the ColumnData; most likely due to an invalid template.
      */
-    private void addColumnChart(final SlideShowTemplate template, final XSLFSlide slide, final Rectangle2D.Double anchor,
-    		final ColumnData columnData, final int shapeId, final String relId) throws TemplateLoadException {
+    private void addBarChart(
+    		final SlideShowTemplate template, 
+    		final XSLFSlide slide,
+    		final Rectangle2D.Double anchor,
+    		final BarData barData, 
+    		final int shapeId, final String relId) throws TemplateLoadException {
 		
+    	if(!barData.validateInput()) {
+    		throw new IllegalArgumentException("Invalid data provided");
+    		
+    	}
+		
+    	/*we are building the chart in-memory */
+    	/*add a new graphic Frame to our slide */
+        slide.getXmlObject()
+        .getCSld()
+        .getSpTree()
+        .addNewGraphicFrame().
+        set(template.getBarChartShapeXML(relId, shapeId, "chart" + shapeId, anchor));
+
     	
-		
+        /*Sheet created.. we need to set data in this sheet while we build the chart */
+        final XSSFWorkbook workbook = new XSSFWorkbook();
+        final XSSFSheet sheet = workbook.createSheet();
+        
+        
+        /* Get the base chart from the template*/
+        final XSLFChart templateChart = template.getBarChart();
+        
+        
+        final CTChartSpace chartSpace = (CTChartSpace) templateChart.getCTChartSpace().copy();
+        final CTChart ctChart = chartSpace.getChart();
+        final CTPlotArea plotArea = ctChart.getPlotArea();
+        final CTBarChart barChart = plotArea.getBarChartArray(0);
+        
+        if(barChart == null) {
+        	throw new IllegalStateException("Template does not have a bar chart");
+        }
+        
+        
+        /*Now start updating the chart with the data.. */
+        
+        int seriesIdx = 0;
+        for( CTBarSer ctBarSer:barChart.getSerArray() ) {
+        	
+        	
+        	//get the data for this series
+        	try {
+        		BarData.Series barSeries = 
+            			barData.getSeriesData().get(seriesIdx);
+        		
+        		//text for this series
+        		CTSerTx tx = ctBarSer.getTx();
+        		tx.getStrRef().getStrCache().getPtArray(0).setV(barSeries.getLabel());
+        		sheet.createRow(0).createCell(seriesIdx + 1).setCellValue(barSeries.getLabel());
+    			String seriesRef = new CellReference(sheet.getSheetName(), 0, seriesIdx + 1, true, true).formatAsString();
+    			tx.getStrRef().setF(seriesRef);
+        		
+    			// category axis data
+    			CTAxDataSource cat = ctBarSer.getCat();
+    			CTStrData catData = cat.getStrRef().getStrCache();
+
+    			// Values
+    			CTNumDataSource val = ctBarSer.getVal();
+    			CTNumData numData = val.getNumRef().getNumCache();
+
+    			catData.setPtArray(null); // unset old axis text
+    			numData.setPtArray(null); // unset old values
+
+    			
+    			int idx = 0;
+    			int rownum = 1;
+    			
+    			for( double barPtVal : barSeries.getValues()) {
+    				
+    				
+    				CTNumVal numVal = numData.addNewPt();
+    				numVal.setIdx(idx);
+    				numVal.setV(new Double( barPtVal ).toString());
+    				
+    				String categoryLabel = barData.getCategoryLabels()[idx];
+    				CTStrVal sVal = catData.addNewPt();
+    				sVal.setIdx(idx);
+    				sVal.setV( categoryLabel);
+    				
+    				XSSFRow row = createOrGetRow(sheet, rownum);
+    				row.createCell(0).setCellValue(categoryLabel);
+    				row.createCell(seriesIdx + 1)
+    				.setCellValue(barPtVal );
+    				
+    				
+    				idx++;
+    				rownum++;
+    				
+    			}
+    			
+    			
+    			numData.getPtCount().setVal(idx);
+    			catData.getPtCount().setVal(idx);
+    			
+    			String numDataRange = new CellRangeAddress(1, rownum - 1, seriesIdx + 1, seriesIdx + 1)
+    					.formatAsString(sheet.getSheetName(), true);
+    			val.getNumRef().setF(numDataRange);
+    			
+    			String axisDataRange = new CellRangeAddress(1, rownum - 1, 0, 0)
+    					.formatAsString(sheet.getSheetName(), true);
+    			cat.getStrRef().setF(axisDataRange);
+    			
+    			seriesIdx++;
+    			
+    			
+            		
+        	}catch(IndexOutOfBoundsException ie) {
+        	    logger.info("No more series to get data from");
+        	}
+        	
+        	
+        }
+        
+        
+        //now save this chart to the ppt i.e write it to the slide
+        
+        
+        try {
+			writeChart(template.getSlideShow(), slide, templateChart, chartSpace, workbook, relId);
+		} catch (InvalidFormatException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+        
+        
+        
+    	
 	}
 
 	/**
@@ -1404,7 +1552,8 @@ public class PowerPointServiceImpl implements PowerPointService {
             final CTNumRef timestampCatNumRef = series.getXVal().getNumRef();
             timestampCatNumRef.setF(new AreaReference(
                 new CellReference(sheetName, 1, 0, true, true),
-                new CellReference(sheetName, 1 + timestamps.length, 0, true, true)
+                new CellReference(sheetName, 1 + timestamps.length, 0, true, true),
+                SpreadsheetVersion.EXCEL2007
             ).formatAsString());
 
             final CTNumData timeStampCatNumCache = timestampCatNumRef.getNumCache();

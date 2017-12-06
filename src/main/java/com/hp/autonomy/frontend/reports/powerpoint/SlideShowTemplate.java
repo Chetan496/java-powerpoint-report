@@ -42,7 +42,7 @@ class SlideShowTemplate {
     private final ImmutablePair<XSLFChart, CTGraphicalObjectFrame> graphChart;
     
     /** A column chart **/
-    private final ImmutablePair<XSLFChart, CTGraphicalObjectFrame> columnChart;
+    private final ImmutablePair<XSLFChart, CTGraphicalObjectFrame> barChart;
 
     SlideShowTemplate(final InputStream inputStream) throws TemplateLoadException {
         try {
@@ -69,7 +69,7 @@ class SlideShowTemplate {
                 throw new TemplateLoadException("Second slide has the wrong chart type, should have a time-axis xy scatterplot chart");
             }
             
-            columnChart = getChart(slides.get(2), "Third slide should have a column chart with 3 series and categories");
+            barChart = getChart(slides.get(2), "Third slide should have a column chart with 3 series and categories");
 
             // Remove the slides afterwards
             pptx.removeSlide(2);
@@ -126,8 +126,8 @@ class SlideShowTemplate {
 
     
     
-    XSLFChart getColumnChart() {
-    	return columnChart.getLeft();
+    XSLFChart getBarChart() {
+    	return barChart.getLeft();
     }
     
     
@@ -140,8 +140,8 @@ class SlideShowTemplate {
      * @param anchor where the shape should be positioned on screen, or null to use the same position as the cloned chart.
      * @return a new clone of the column chart XML.
      */
-    CTGraphicalObjectFrame getColumnhChartShapeXML(final String relId, final int shapeId, final String shapeName, final Rectangle2D.Double anchor) {
-        return cloneShapeXML(columnChart.getRight(), relId, shapeId, shapeName, anchor);
+    CTGraphicalObjectFrame getBarChartShapeXML(final String relId, final int shapeId, final String shapeName, final Rectangle2D.Double anchor) {
+        return cloneShapeXML(barChart.getRight(), relId, shapeId, shapeName, anchor);
     }
     
     

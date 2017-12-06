@@ -5,7 +5,7 @@
 
 package com.hp.autonomy.frontend.reports.powerpoint;
 
-import com.hp.autonomy.frontend.reports.powerpoint.dto.ColumnData;
+import com.hp.autonomy.frontend.reports.powerpoint.dto.BarData;
 import com.hp.autonomy.frontend.reports.powerpoint.dto.DategraphData;
 import com.hp.autonomy.frontend.reports.powerpoint.dto.ListData;
 import com.hp.autonomy.frontend.reports.powerpoint.dto.MapData;
@@ -33,7 +33,7 @@ public interface PowerPointService {
      * @return a PowerPoint presentation with a single slide.
      * @throws TemplateLoadException if the template is invalid.
      */
-    XMLSlideShow column(ColumnData columnData) throws TemplateLoadException;
+    XMLSlideShow bar(BarData barData) throws TemplateLoadException;
 
     
     

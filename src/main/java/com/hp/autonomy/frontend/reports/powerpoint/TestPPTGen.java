@@ -7,6 +7,8 @@ import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.ArrayList;
+import java.util.Arrays;
 
 import org.apache.poi.POIXMLDocumentPart;
 import org.apache.poi.ss.util.CellRangeAddress;
@@ -32,6 +34,8 @@ import org.openxmlformats.schemas.drawingml.x2006.chart.CTSerTx;
 import org.openxmlformats.schemas.drawingml.x2006.chart.CTStrData;
 import org.openxmlformats.schemas.drawingml.x2006.chart.CTStrVal;
 import org.openxmlformats.schemas.drawingml.x2006.chart.impl.CTBarDirImpl;
+
+import com.hp.autonomy.frontend.reports.powerpoint.dto.BarData;
 
 public class TestPPTGen {
 
@@ -434,7 +438,23 @@ public class TestPPTGen {
 
 		// TestBarChartGen(args);
 
-		TestThreeSeriesColumnChartGen(args);
+		//TestThreeSeriesColumnChartGen(args);
+		PowerPointService pptxService = new PowerPointServiceImpl();
+		pptxService.validateTemplate();
+		
+	    BarData barData = new BarData();
+	    barData.setCategoryLabels(new String[] { "cat1", "cat2", "cat3" });
+	    barData.setColumnChart(true);
+	    barData.setSeriesData( new ArrayList<BarData.Series>( Arrays.asList(
+	    		   new BarData.Series("Red", "series1", new double[] { 1.0, 2.0 }),
+	    		   new BarData.Series("Blue", "series2", new double[] { 1.0, 3.0 }),
+	    		   new BarData.Series("Green", "series2", new double[] { 1.0, 2.5 })
+	    		
+	    		) ));
+	    
+		final XMLSlideShow pptx = pptxService.bar(barData);
+		pptx.write(new FileOutputStream("E:\\newcolchart.pptx"));
+		
 
 	}
 
