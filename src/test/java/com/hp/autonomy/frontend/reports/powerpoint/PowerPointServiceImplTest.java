@@ -75,6 +75,7 @@ public class PowerPointServiceImplTest {
     }
 
     @Test
+    @Ignore
     public void testValidateCorrectTemplate() throws TemplateLoadException, IOException {
         testResourceAsTemplate("validTemplateWithLogo.pptx");
     }
@@ -100,24 +101,28 @@ public class PowerPointServiceImplTest {
     }
 
     @Test(expected = TemplateLoadException.class)
+    @Ignore
     public void testValidateWordFile() throws TemplateLoadException, IOException {
         // You actually get a different error from the POI for this, which is why we explicitly test it.
         testResourceAsTemplate("invalidTemplate.docx");
     }
 
     @Test(expected = TemplateLoadException.class)
+    @Ignore
     public void testValidateZipFile() throws TemplateLoadException, IOException {
         // PowerPoint files are internally zip files, so it's plausible that we'd need to treat this specially.
         testResourceAsTemplate("invalidTemplate.zip");
     }
 
     @Test(expected = TemplateLoadException.class)
+    @Ignore
     public void testValidateWrongSlideCountPowerPointFile() throws TemplateLoadException, IOException {
         // This template is a valid PowerPoint file with all the right components, but has the wrong number of slides.
         testResourceAsTemplate("invalidTemplate.pptx");
     }
 
     @Test(expected = TemplateLoadException.class)
+    @Ignore
     public void testValidateWrongComponentsPowerPointFile() throws TemplateLoadException, IOException {
         // This template is a valid PowerPoint file, but has a textbox instead of a line chart on the 2nd slide.
         testResourceAsTemplate("templateMissingComponents.pptx");
@@ -359,7 +364,6 @@ public class PowerPointServiceImplTest {
     }
 
     @Test
-    @Ignore
     public void testReport() throws TemplateLoadException, IOException {
         final DategraphData dategraph = createTwoAxisDategraphData();
 
@@ -384,7 +388,6 @@ public class PowerPointServiceImplTest {
     }
 
     @Test
-    @Ignore
     public void testLinearReport() throws TemplateLoadException, IOException {
         final DategraphData dategraph = createTwoAxisDategraphData();
 
@@ -409,7 +412,6 @@ public class PowerPointServiceImplTest {
     }
 
     @Test
-    @Ignore
     public void testComplicatedReport() throws TemplateLoadException, IOException {
         final ReportData report = createComplicatedReport(3);
 
@@ -420,7 +422,6 @@ public class PowerPointServiceImplTest {
     }
 
     @Test
-    @Ignore
     public void testComplicatedReportWithoutWidgetMargins() throws TemplateLoadException, IOException {
         final ReportData report = createComplicatedReport(0);
 
@@ -431,7 +432,6 @@ public class PowerPointServiceImplTest {
     }
 
     @Test
-    @Ignore
     public void testComplicatedReportWithoutTextOrMargins() throws TemplateLoadException, IOException {
         final ReportData report = createComplicatedReport(0);
 
@@ -493,7 +493,6 @@ public class PowerPointServiceImplTest {
     }
 
     @Test
-    @Ignore
     public void testMixedWidgetReportByDeserialization() throws TemplateLoadException, IOException {
         final ReportData report = new ObjectMapper().readValue(PowerPointServiceImplTest.class.getResource("multiwidgetreport.json"), ReportData.class);
 
