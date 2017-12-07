@@ -141,176 +141,195 @@ import static org.apache.poi.POIXMLTypeLoader.DEFAULT_XML_OPTIONS;
 
 /**
  * Default implementation of PowerPointService.
- * @see <a href="https://github.com/hpe-idol/java-powerpoint-report/" target="_blank">README.md</a> for examples and usage instructions.
+ * 
+ * @see <a href="https://github.com/hpe-idol/java-powerpoint-report/" target=
+ *      "_blank">README.md</a> for examples and usage instructions.
  */
 public class PowerPointServiceImpl implements PowerPointService {
-	
-	final  static Logger logger = LoggerFactory.getLogger(PowerPointService.class);
 
-    /** The source for the template file. */
-    private final TemplateSource pptxTemplate;
+	final static Logger logger = LoggerFactory.getLogger(PowerPointService.class);
 
-    /** The source for template settings, like anchor points etc. */
-    private final TemplateSettingsSource pptxSettings;
+	/** The source for the template file. */
+	private final TemplateSource pptxTemplate;
 
-    /** The image source for converting image identifiers to image data. */
-    private final ImageSource imageSource;
+	/** The source for template settings, like anchor points etc. */
+	private final TemplateSettingsSource pptxSettings;
 
-    /**
-     * Constructor for the PowerPointServiceImpl, allowing you to provide your own template and settings.
-     * @param pptxTemplate what template .pptx file to use.
-     * @param pptxSettings what template settings to use.
-     * @param imageSource what image source to use for converting image identifiers to image data.
-     */
-    public PowerPointServiceImpl(final TemplateSource pptxTemplate, final TemplateSettingsSource pptxSettings, final ImageSource imageSource) {
-        this.pptxTemplate = pptxTemplate;
-        this.pptxSettings = pptxSettings;
-        this.imageSource = imageSource;
-    }
+	/** The image source for converting image identifiers to image data. */
+	private final ImageSource imageSource;
 
-    /**
-     * Constructor for the PowerPointServiceImpl, allowing you to provide your own template and settings.
-     * This uses the default ImageSource implementation which only allows base64-encoded data URIs as images.
-     * @param pptxTemplate what template .pptx file to use.
-     * @param pptxSettings what template settings to use.
-     */
-    public PowerPointServiceImpl(final TemplateSource pptxTemplate, final TemplateSettingsSource pptxSettings) {
-        this(pptxTemplate, pptxSettings, ImageSource.DEFAULT);
-    }
+	/**
+	 * Constructor for the PowerPointServiceImpl, allowing you to provide your own
+	 * template and settings.
+	 * 
+	 * @param pptxTemplate
+	 *            what template .pptx file to use.
+	 * @param pptxSettings
+	 *            what template settings to use.
+	 * @param imageSource
+	 *            what image source to use for converting image identifiers to image
+	 *            data.
+	 */
+	public PowerPointServiceImpl(final TemplateSource pptxTemplate, final TemplateSettingsSource pptxSettings,
+			final ImageSource imageSource) {
+		this.pptxTemplate = pptxTemplate;
+		this.pptxSettings = pptxSettings;
+		this.imageSource = imageSource;
+	}
 
-    /**
-     * Constructor which uses the default template and default settings, which don't have any logos or margins reserved.
-     * This uses the default ImageSource implementation which only allows base64-encoded data URIs as images.
-     */
-    public PowerPointServiceImpl() {
-        this(TemplateSource.DEFAULT, TemplateSettingsSource.DEFAULT, ImageSource.DEFAULT);
-    }
+	/**
+	 * Constructor for the PowerPointServiceImpl, allowing you to provide your own
+	 * template and settings. This uses the default ImageSource implementation which
+	 * only allows base64-encoded data URIs as images.
+	 * 
+	 * @param pptxTemplate
+	 *            what template .pptx file to use.
+	 * @param pptxSettings
+	 *            what template settings to use.
+	 */
+	public PowerPointServiceImpl(final TemplateSource pptxTemplate, final TemplateSettingsSource pptxSettings) {
+		this(pptxTemplate, pptxSettings, ImageSource.DEFAULT);
+	}
 
-    @Override
-    public void validateTemplate() throws TemplateLoadException {
-        loadTemplate();
-    }
+	/**
+	 * Constructor which uses the default template and default settings, which don't
+	 * have any logos or margins reserved. This uses the default ImageSource
+	 * implementation which only allows base64-encoded data URIs as images.
+	 */
+	public PowerPointServiceImpl() {
+		this(TemplateSource.DEFAULT, TemplateSettingsSource.DEFAULT, ImageSource.DEFAULT);
+	}
 
-    /**
-     * Utility function to load and parse the template file.
-     * @return the internal parsed template and chart information.
-     * @throws TemplateLoadException if any errors occurred.
-     */
-    private SlideShowTemplate loadTemplate() throws TemplateLoadException {
-        try(InputStream inputStream = pptxTemplate.getInputStream()) {
-            return new SlideShowTemplate(inputStream);
-        }
-        catch(IOException e) {
-            throw new TemplateLoadException("Error while loading template", e);
-        }
-        catch(NotOfficeXmlFileException|POIXMLException e) {
-            throw new TemplateLoadException("File is not a valid Office PowerPoint file", e);
-        } catch (InvalidFormatException e) {
-			
+	@Override
+	public void validateTemplate() throws TemplateLoadException {
+		loadTemplate();
+	}
+
+	/**
+	 * Utility function to load and parse the template file.
+	 * 
+	 * @return the internal parsed template and chart information.
+	 * @throws TemplateLoadException
+	 *             if any errors occurred.
+	 */
+	private SlideShowTemplate loadTemplate() throws TemplateLoadException {
+		try (InputStream inputStream = pptxTemplate.getInputStream()) {
+			return new SlideShowTemplate(inputStream);
+		} catch (IOException e) {
+			throw new TemplateLoadException("Error while loading template", e);
+		} catch (NotOfficeXmlFileException | POIXMLException e) {
+			throw new TemplateLoadException("File is not a valid Office PowerPoint file", e);
+		} catch (InvalidFormatException e) {
+
 			throw new IllegalArgumentException("c");
 		}
-    }
+	}
 
-    /**
-     * Creates a bounding rectangle in PowerPoint coordinates to draw on for a given PowerPoint slideshow, using the
-     *   anchor points from the settings.
-     * @param ppt the PowerPoint presentation to use.
-     * @return bounding rectangle in PowerPoint coordinates.
-     */
-    private Rectangle2D.Double createPageAnchor(final XMLSlideShow ppt) {
-        return createPageAnchor(ppt, this.pptxSettings.getSettings().getAnchor());
-    }
+	/**
+	 * Creates a bounding rectangle in PowerPoint coordinates to draw on for a given
+	 * PowerPoint slideshow, using the anchor points from the settings.
+	 * 
+	 * @param ppt
+	 *            the PowerPoint presentation to use.
+	 * @return bounding rectangle in PowerPoint coordinates.
+	 */
+	private Rectangle2D.Double createPageAnchor(final XMLSlideShow ppt) {
+		return createPageAnchor(ppt, this.pptxSettings.getSettings().getAnchor());
+	}
 
-    /**
-     * Convert provided anchor points from fractional units (0-1 range) to PowerPoint coordinates.
-     * @param ppt the PowerPoint presentation to use.
-     * @param anchor the anchor in fractional (0-1) units.
-     * @return bounding rectangle in PowerPoint coordinates.
-     */
-    private static Rectangle2D.Double createPageAnchor(final XMLSlideShow ppt, final Anchor anchor) {
-        final Dimension pageSize = ppt.getPageSize();
-        final double availW = pageSize.getWidth();
-        final double availH = pageSize.getHeight();
+	/**
+	 * Convert provided anchor points from fractional units (0-1 range) to
+	 * PowerPoint coordinates.
+	 * 
+	 * @param ppt
+	 *            the PowerPoint presentation to use.
+	 * @param anchor
+	 *            the anchor in fractional (0-1) units.
+	 * @return bounding rectangle in PowerPoint coordinates.
+	 */
+	private static Rectangle2D.Double createPageAnchor(final XMLSlideShow ppt, final Anchor anchor) {
+		final Dimension pageSize = ppt.getPageSize();
+		final double availW = pageSize.getWidth();
+		final double availH = pageSize.getHeight();
 
-        return new Rectangle2D.Double(availW * anchor.getX(), availH * anchor.getY(), availW * anchor.getWidth(), availH * anchor.getHeight());
-    }
+		return new Rectangle2D.Double(availW * anchor.getX(), availH * anchor.getY(), availW * anchor.getWidth(),
+				availH * anchor.getHeight());
+	}
 
-    
-    @Override
-    public XMLSlideShow pie(final PieChartData pieChartData)  throws  TemplateLoadException {
-    	final SlideShowTemplate template = loadTemplate();
-    	
-    	final XMLSlideShow ppt = template.getSlideShow();
-    	
-        final XSLFSlide slide = ppt.createSlide();
-        
-        final int shapeId = 1;
-        
-        addPieChart(template,  slide, null, pieChartData , shapeId, "relId" + shapeId) ;
-        
-        return ppt;
-    }
-    
-    
-    
-    
-    /**
-     * Internal implementation to add a sunburst chart (actually a doughnut chart) to a slide, based on a template.
-     * @param template the parsed template information.
-     * @param slide the slide to add to.
-     * @param anchor optional bounding rectangle to draw onto, in PowerPoint coordinates.
-     *               If null, we'll use the bounds from the original template chart.
-     * @param data the piechart data.
-     * @param shapeId the slide shape ID, should be unique within the slide.
-     * @param relId the relation ID to the chart data.
-     * @throws TemplateLoadException if we can't create the piechart; most likely due to an invalid template.
-     */
-    private void addPieChart(
-    		final SlideShowTemplate template, 
-    		final XSLFSlide slide, 
-    		final Rectangle2D.Double anchor, 
-    		final PieChartData pieChartData,
-			final int shapeId, final String relId) {
-		
-    	
-    	if(!pieChartData.validateInput() ) {
-    		throw new IllegalArgumentException("Invalid data provided");
-    	}
-    	
-    	//this is adding chart1 and shapeid=1
-    	slide.getXmlObject()
-        .getCSld()
-        .getSpTree()
-        .addNewGraphicFrame()
-        .set( template.getPieChartShapeXML(relId, shapeId, "chart"+shapeId, anchor)  );
-    	
-    	/*Sheet created.. we need to set data in this sheet while we build the chart */
-        final XSSFWorkbook workbook = new XSSFWorkbook();
-        final XSSFSheet sheet = workbook.createSheet();
-        
-        final XSLFChart templateChart = template.getPieChart();
-        
-        final CTChartSpace chartSpace = (CTChartSpace) templateChart.getCTChartSpace().copy();
-        final CTChart ctChart = chartSpace.getChart();
-        final CTPlotArea plotArea = ctChart.getPlotArea();
-        final CTPieChart pieChart = plotArea.getPieChartArray(0);
-        
-        if(pieChart == null) {
-        	throw new IllegalStateException("Template does not have a pie chart");
-        }
-        
-        /*Now start updating the chart with the data.. */
-        /*Piechart has only one series.. */
-        CTPieSer ctPieSer = pieChart.getSerArray(0);
-        
-        //update text for this series
-        CTSerTx tx = ctPieSer.getTx();
-        tx.getStrRef().getStrCache().getPtArray(0).setV( pieChartData.getChartLabel() );
-        sheet.createRow(0).createCell(1).setCellValue(pieChartData.getChartLabel());
-        String seriesRef = new CellReference(sheet.getSheetName(), 0,  1, true, true).formatAsString();
+	@Override
+	public XMLSlideShow pie(final PieChartData pieChartData) throws TemplateLoadException {
+		final SlideShowTemplate template = loadTemplate();
+
+		final XMLSlideShow ppt = template.getSlideShow();
+
+		final XSLFSlide slide = ppt.createSlide();
+
+		final int shapeId = 1;
+
+		addPieChart(template, slide, null, pieChartData, shapeId, "relId" + shapeId);
+
+		return ppt;
+	}
+
+	/**
+	 * Internal implementation to add a sunburst chart (actually a doughnut chart)
+	 * to a slide, based on a template.
+	 * 
+	 * @param template
+	 *            the parsed template information.
+	 * @param slide
+	 *            the slide to add to.
+	 * @param anchor
+	 *            optional bounding rectangle to draw onto, in PowerPoint
+	 *            coordinates. If null, we'll use the bounds from the original
+	 *            template chart.
+	 * @param data
+	 *            the piechart data.
+	 * @param shapeId
+	 *            the slide shape ID, should be unique within the slide.
+	 * @param relId
+	 *            the relation ID to the chart data.
+	 * @throws TemplateLoadException
+	 *             if we can't create the piechart; most likely due to an invalid
+	 *             template.
+	 */
+	private void addPieChart(final SlideShowTemplate template, final XSLFSlide slide, final Rectangle2D.Double anchor,
+			final PieChartData pieChartData, final int shapeId, final String relId) {
+
+		if (!pieChartData.validateInput()) {
+			throw new IllegalArgumentException("Invalid data provided");
+		}
+
+		// this is adding chart1 and shapeid=1
+		slide.getXmlObject().getCSld().getSpTree().addNewGraphicFrame()
+				.set(template.getPieChartShapeXML(relId, shapeId, "chart" + shapeId, anchor));
+
+		/* Sheet created.. we need to set data in this sheet while we build the chart */
+		final XSSFWorkbook workbook = new XSSFWorkbook();
+		final XSSFSheet sheet = workbook.createSheet();
+
+		final XSLFChart templateChart = template.getPieChart();
+
+		final CTChartSpace chartSpace = (CTChartSpace) templateChart.getCTChartSpace().copy();
+		final CTChart ctChart = chartSpace.getChart();
+		final CTPlotArea plotArea = ctChart.getPlotArea();
+		final CTPieChart pieChart = plotArea.getPieChartArray(0);
+
+		if (pieChart == null) {
+			throw new IllegalStateException("Template does not have a pie chart");
+		}
+
+		/* Now start updating the chart with the data.. */
+		/* Piechart has only one series.. */
+		CTPieSer ctPieSer = pieChart.getSerArray(0);
+
+		// update text for this series
+		CTSerTx tx = ctPieSer.getTx();
+		tx.getStrRef().getStrCache().getPtArray(0).setV(pieChartData.getChartLabel());
+		sheet.createRow(0).createCell(1).setCellValue(pieChartData.getChartLabel());
+		String seriesRef = new CellReference(sheet.getSheetName(), 0, 1, true, true).formatAsString();
 		tx.getStrRef().setF(seriesRef);
-        
-		
+
 		// category axis data
 		CTAxDataSource cat = ctPieSer.getCat();
 		CTStrData catData = cat.getStrRef().getStrCache();
@@ -322,456 +341,39 @@ public class PowerPointServiceImpl implements PowerPointService {
 		catData.setPtArray(null); // unset old axis text
 		numData.setPtArray(null); // unset old values
 
-        int idx = 0;
-        int rownum = 1;
-        
-        for(double seriesVal:pieChartData.getSeries() ) {
-        	
-        	CTNumVal numVal = numData.addNewPt();
+		int idx = 0;
+		int rownum = 1;
+
+		for (double seriesVal : pieChartData.getSeries()) {
+
+			CTNumVal numVal = numData.addNewPt();
 			numVal.setIdx(idx);
-			numVal.setV(new Double( seriesVal ).toString());
-			
-			
+			numVal.setV(new Double(seriesVal).toString());
+
 			String categoryLabel = pieChartData.getCategories()[idx];
 			CTStrVal sVal = catData.addNewPt();
 			sVal.setIdx(idx);
-			sVal.setV( categoryLabel);
-			
+			sVal.setV(categoryLabel);
+
 			XSSFRow row = createOrGetRow(sheet, rownum);
 			row.createCell(0).setCellValue(categoryLabel);
-			row.createCell(1).setCellValue(seriesVal );
-			
+			row.createCell(1).setCellValue(seriesVal);
+
 			idx++;
 			rownum++;
-			
-			
-        }
-        
+
+		}
+
 		numData.getPtCount().setVal(idx);
 		catData.getPtCount().setVal(idx);
-		
-		
-		String numDataRange = new CellRangeAddress(1, rownum - 1,  1,  1)
-				.formatAsString(sheet.getSheetName(), true);
+
+		String numDataRange = new CellRangeAddress(1, rownum - 1, 1, 1).formatAsString(sheet.getSheetName(), true);
 		val.getNumRef().setF(numDataRange);
-		
-		String axisDataRange = new CellRangeAddress(1, rownum - 1, 0, 0)
-				.formatAsString(sheet.getSheetName(), true);
+
+		String axisDataRange = new CellRangeAddress(1, rownum - 1, 0, 0).formatAsString(sheet.getSheetName(), true);
 		cat.getStrRef().setF(axisDataRange);
-        
-		
-	    try {
-		 	writeChart(template.getSlideShow(), slide, templateChart, chartSpace, workbook, relId);
-		 } catch (InvalidFormatException e) {
-		 	// TODO Auto-generated catch block
-		 	e.printStackTrace();
-		 } catch (IOException e) {
-			// TODO Auto-generated catch block
-		 	e.printStackTrace();
-		 }
-		
-	}
-    
-    
-    
-    
 
-	@Override
-    public XMLSlideShow topicmap(
-            final TopicMapData topicmap
-    ) throws TemplateLoadException {
-        final XMLSlideShow ppt = loadTemplate().getSlideShow();
-        final XSLFSlide slide = ppt.createSlide();
-
-        addTopicMap(slide, createPageAnchor(ppt), topicmap);
-
-        return ppt;
-    }
-
-    /**
-     * Internal implementation to add a topic map to a slide.
-     * @param slide the slide to add to.
-     * @param anchor bounding rectangle to draw onto, in PowerPoint coordinates.
-     * @param data the topic map data.
-     */
-    private static void addTopicMap(final XSLFSlide slide, final Rectangle2D.Double anchor, final TopicMapData data) {
-        for(final TopicMapData.Path reqPath : data.getPaths()) {
-            final XSLFFreeformShape shape = slide.createFreeform();
-            final Path2D.Double path = new Path2D.Double();
-
-            boolean first = true;
-
-            for(double[] point : reqPath.getPoints()) {
-                final double x = point[0] * anchor.getWidth() + anchor.getMinX();
-                final double y = point[1] * anchor.getHeight() + anchor.getMinY();
-                if(first) {
-                    path.moveTo(x, y);
-                    first = false;
-                }
-                else {
-                    path.lineTo(x, y);
-                }
-            }
-            path.closePath();
-
-            shape.setPath(path);
-            shape.setStrokeStyle(2);
-            shape.setLineColor(Color.GRAY);
-            shape.setHorizontalCentered(true);
-            shape.setVerticalAlignment(VerticalAlignment.MIDDLE);
-            shape.setTextAutofit(TextShape.TextAutofit.NORMAL);
-
-            final XSLFTextParagraph text = shape.addNewTextParagraph();
-            final XSLFTextRun textRun = text.addNewTextRun();
-            textRun.setText(reqPath.name);
-            textRun.setFontColor(Color.WHITE);
-            textRun.setBold(true);
-
-            final CTShape cs = (CTShape) shape.getXmlObject();
-
-            double max = 100, min = 1, scale = 100;
-            final CTTextNormalAutofit autoFit = cs.getTxBody().getBodyPr().getNormAutofit();
-            final double availHeight = path.getBounds2D().getHeight();
-            final int RESIZE_ATTEMPTS = 7;
-
-            for (int attempts = 0; attempts < RESIZE_ATTEMPTS; ++attempts) {
-                // PowerPoint doesn't resize the text till you edit it once, which means the text initially looks too
-                //   large when you first view the slide; so we binary-chop to get a sensible initial approximation.
-                // OpenOffice does the text resize on load so it doesn't have this problem.
-                autoFit.setFontScale(Math.max(1, (int)(scale * 1000)));
-
-                final double textHeight = shape.getTextHeight();
-                if (textHeight < availHeight) {
-                    min = scale;
-                    scale = 0.5 * (min + max);
-                }
-                else if (textHeight > availHeight) {
-                    max = scale;
-                    scale = 0.5 * (min + max);
-                }
-                else {
-                    break;
-                }
-            }
-
-            final int opacity = (int) (100000 * reqPath.getOpacity());
-            final Color c1 = Color.decode(reqPath.getColor());
-            final Color c2 = Color.decode(reqPath.getColor2());
-
-            final CTGradientFillProperties gFill = cs.getSpPr().addNewGradFill();
-            gFill.addNewLin().setAng(3300000);
-            final CTGradientStopList list = gFill.addNewGsLst();
-
-            final CTGradientStop stop1 = list.addNewGs();
-            stop1.setPos(0);
-            final CTSRgbColor color1 = stop1.addNewSrgbClr();
-            color1.setVal(new byte[]{(byte) c1.getRed(), (byte) c1.getGreen(), (byte) c1.getBlue()});
-            color1.addNewAlpha().setVal(opacity);
-
-            final CTGradientStop stop2 = list.addNewGs();
-            stop2.setPos(100000);
-            final CTSRgbColor color2 = stop2.addNewSrgbClr();
-            color2.setVal(new byte[]{(byte) c2.getRed(), (byte) c2.getGreen(), (byte) c2.getBlue()});
-            color2.addNewAlpha().setVal(opacity);
-
-            if (reqPath.level > 0) {
-                // The nodes which aren't leaf nodes can be clicked on to hide them so you can see the nodes underneath.
-                // This only works in PowerPoint; OpenOffice doesn't seem to support it. OpenOffice has its own syntax
-                //   to do something similar, but we don't use it since PowerPoint treats it as corrupt.
-                final String shapeId = Integer.toString(shape.getShapeId());
-                final CTSlide slXML = slide.getXmlObject();
-
-                final CTTimeNodeList childTnLst;
-                final CTBuildList bldLst;
-                if (!slXML.isSetTiming()) {
-                    final CTSlideTiming timing = slXML.addNewTiming();
-                    final CTTLCommonTimeNodeData ctn = timing.addNewTnLst().addNewPar().addNewCTn();
-                    ctn.setDur("indefinite");
-                    ctn.setRestart(STTLTimeNodeRestartTypeImpl.NEVER);
-                    ctn.setNodeType(STTLTimeNodeType.TM_ROOT);
-                    childTnLst = ctn.addNewChildTnLst();
-                    bldLst = timing.addNewBldLst();
-                }
-                else {
-                    final CTSlideTiming timing = slXML.getTiming();
-                    childTnLst = timing.getTnLst().getParArray(0).getCTn().getChildTnLst();
-                    bldLst = timing.getBldLst();
-                }
-
-                final CTTLTimeNodeSequence seq = childTnLst.addNewSeq();
-                seq.setConcurrent(true);
-                seq.setNextAc(STTLNextActionType.SEEK);
-                final CTTLCommonTimeNodeData common = seq.addNewCTn();
-
-                common.setRestart(STTLTimeNodeRestartType.WHEN_NOT_ACTIVE);
-                common.setFill(STTLTimeNodeFillType.HOLD);
-                common.setEvtFilter("cancelBubble");
-                common.setNodeType(STTLTimeNodeType.INTERACTIVE_SEQ);
-
-                final CTTLTimeConditionList condList = common.addNewStCondLst();
-                final CTTLTimeCondition cond = condList.addNewCond();
-                cond.setEvt(STTLTriggerEvent.ON_CLICK);
-                cond.setDelay(0);
-                cond.addNewTgtEl().addNewSpTgt().setSpid(shapeId);
-
-                final CTTLTimeCondition endSync = common.addNewEndSync();
-                endSync.setEvt(STTLTriggerEvent.END);
-                endSync.setDelay(0);
-                endSync.addNewRtn().setVal(STTLTriggerRuntimeNode.ALL);
-
-                // These holdCtn* 'hold' transitions with zero delay might seem redundant; but they're exported in the
-                //   PowerPoint XML, and the online PowerPoint Office365 viewer won't support the click animations
-                //   unless they're present (e.g. from the 'Start Slide Show' button in the browser).
-                final CTTLCommonTimeNodeData holdCtn1 = common.addNewChildTnLst().addNewPar().addNewCTn();
-
-                holdCtn1.setFill(STTLTimeNodeFillType.HOLD);
-                holdCtn1.addNewStCondLst().addNewCond().setDelay(0);
-
-                final CTTLCommonTimeNodeData holdCtn2 = holdCtn1.addNewChildTnLst().addNewPar().addNewCTn();
-
-                holdCtn2.setFill(STTLTimeNodeFillType.HOLD);
-                holdCtn2.addNewStCondLst().addNewCond().setDelay(0);
-
-                final CTTLCommonTimeNodeData clickCtn = holdCtn2.addNewChildTnLst().addNewPar().addNewCTn();
-
-                clickCtn.setPresetID(10);
-                clickCtn.setPresetClass(STTLTimeNodePresetClassType.EXIT);
-                clickCtn.setPresetSubtype(0);
-                clickCtn.setFill(STTLTimeNodeFillType.HOLD);
-                clickCtn.setGrpId(0);
-                clickCtn.setNodeType(STTLTimeNodeType.CLICK_EFFECT);
-
-                clickCtn.addNewStCondLst().addNewCond().setDelay(0);
-
-                final CTTimeNodeList clickChildTnList = clickCtn.addNewChildTnLst();
-
-                final CTTLAnimateEffectBehavior animEffect = clickChildTnList.addNewAnimEffect();
-                animEffect.setTransition(STTLAnimateEffectTransition.OUT);
-                animEffect.setFilter("fade");
-                final CTTLCommonBehaviorData cBhvr = animEffect.addNewCBhvr();
-                final CTTLCommonTimeNodeData bhvrCtn = cBhvr.addNewCTn();
-
-                bhvrCtn.setDur(500);
-                cBhvr.addNewTgtEl().addNewSpTgt().setSpid(shapeId);
-
-                final CTTLSetBehavior clickSet = clickChildTnList.addNewSet();
-                final CTTLCommonBehaviorData clickSetBhvr = clickSet.addNewCBhvr();
-                final CTTLCommonTimeNodeData hideCtn = clickSetBhvr.addNewCTn();
-
-                hideCtn.setDur(1);
-                hideCtn.setFill(STTLTimeNodeFillType.HOLD);
-                hideCtn.addNewStCondLst().addNewCond().setDelay(499);
-
-                clickSetBhvr.addNewTgtEl().addNewSpTgt().setSpid(shapeId);
-                clickSetBhvr.addNewAttrNameLst().addAttrName("style.visibility");
-                clickSet.addNewTo().addNewStrVal().setVal("hidden");
-
-                final CTTLBuildParagraph bldP = bldLst.addNewBldP();
-                bldP.setSpid(shapeId);
-                bldP.setGrpId(0);
-                bldP.setAnimBg(true);
-            }
-        }
-    }
-
-    @Override
-    public XMLSlideShow sunburst(
-            final SunburstData sunburst
-    ) throws TemplateLoadException {
-        if(!sunburst.validateInput()) {
-            throw new IllegalArgumentException("Number of values should match the number of categories, and color / stroke color must either be null or nonempty");
-        }
-
-        final SlideShowTemplate template = loadTemplate();
-        final XMLSlideShow ppt = template.getSlideShow();
-        final XSLFSlide slide = ppt.createSlide();
-
-        System.out.println("relations before");
-        try { 
-			PackageRelationshipCollection chartRelations = slide.getPackagePart().getRelationships();
-			chartRelations.forEach((PackageRelationship rel) ->  {
-				System.out.println(rel.getTargetURI());
-					
-			}   );
-		} catch (InvalidFormatException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-        
-        final int shapeId = 1;
-
-        addSunburst(template, slide, null, sunburst, shapeId, "relId" + shapeId);
-
-        return ppt;
-    }
-    
-    
-    
-    @Override
-	public XMLSlideShow bar(BarData barData) throws TemplateLoadException {
-    	
-    	if( !barData.validateInput() ) {
-    		throw new IllegalArgumentException("Number of seriesdata should match the number of categories");
-    	}
-    	
-    	final SlideShowTemplate template = loadTemplate();
-        final XMLSlideShow ppt = template.getSlideShow();
-        final XSLFSlide slide = ppt.createSlide();
-        
-        final int shapeId = 1;
-        
-        addBarChart(template,  slide, null, barData , shapeId, "relId" + shapeId) ;
-        
-    	
-		return ppt;
-	}
-    
-    
-    private static XSSFRow createOrGetRow(XSSFSheet sheet, int rownum) {
-
-		if (sheet.getRow(rownum) == null) {
-			return sheet.createRow(rownum);
-		}
-
-		return sheet.getRow(rownum);
-	}
-
-    /**
-     * Internal implementation to add a clustered column chart to a slide, based on a template.
-     * The max number of allowed series is equal to number of series in the template.
-     * @param template the parsed template information.
-     * @param slide  the slide to add to.
-     * @param anchoroptional bounding rectangle to draw onto, in PowerPoint coordinates.
-     *               If null, we'll use the bounds from the original template chart.
-     * @param columnData, the clustered column data
-     * @param shapeId. the slide shape ID, should be unique within the slide.
-     * @param relId. the relation ID to the chart data.
-     * @throws TemplateLoadException if we can't create the ColumnData; most likely due to an invalid template.
-     */
-    private void addBarChart(
-    		final SlideShowTemplate template, 
-    		final XSLFSlide slide,
-    		final Rectangle2D.Double anchor,
-    		final BarData barData, 
-    		final int shapeId, final String relId) throws TemplateLoadException {
-		
-    	if(!barData.validateInput()) {
-    		throw new IllegalArgumentException("Invalid data provided");
-    		
-    	}
-		
-    	/*we are building the chart in-memory */
-    	/*add a new graphic Frame to our slide */
-        slide.getXmlObject()
-        .getCSld()
-        .getSpTree()
-        .addNewGraphicFrame()
-        .set(template.getBarChartShapeXML(relId, shapeId, "chart" + shapeId, anchor));
-
-    	
-        /*Sheet created.. we need to set data in this sheet while we build the chart */
-        final XSSFWorkbook workbook = new XSSFWorkbook();
-        final XSSFSheet sheet = workbook.createSheet();
-        
-        
-        /* Get the base chart from the template*/
-        final XSLFChart templateChart = template.getBarChart();
-        
-        
-        final CTChartSpace chartSpace = (CTChartSpace) templateChart.getCTChartSpace().copy();
-        final CTChart ctChart = chartSpace.getChart();
-        final CTPlotArea plotArea = ctChart.getPlotArea();
-        final CTBarChart barChart = plotArea.getBarChartArray(0);
-        
-        if(barChart == null) {
-        	throw new IllegalStateException("Template does not have a bar chart");
-        }
-        
-        
-        /*Now start updating the chart with the data.. */
-        
-        int seriesIdx = 0;
-        for( CTBarSer ctBarSer:barChart.getSerArray() ) {
-        	
-        	
-        	//get the data for this series
-        	try {
-        		BarData.Series barSeries = 
-            			barData.getSeriesData().get(seriesIdx);
-        		
-        		//text for this series
-        		CTSerTx tx = ctBarSer.getTx();
-        		tx.getStrRef().getStrCache().getPtArray(0).setV(barSeries.getLabel());
-        		sheet.createRow(0).createCell(seriesIdx + 1).setCellValue(barSeries.getLabel());
-    			String seriesRef = new CellReference(sheet.getSheetName(), 0, seriesIdx + 1, true, true).formatAsString();
-    			tx.getStrRef().setF(seriesRef);
-        		
-    			// category axis data
-    			CTAxDataSource cat = ctBarSer.getCat();
-    			CTStrData catData = cat.getStrRef().getStrCache();
-
-    			// Values
-    			CTNumDataSource val = ctBarSer.getVal();
-    			CTNumData numData = val.getNumRef().getNumCache();
-
-    			catData.setPtArray(null); // unset old axis text
-    			numData.setPtArray(null); // unset old values
-
-    			
-    			int idx = 0;
-    			int rownum = 1;
-    			
-    			for( double barPtVal : barSeries.getValues()) {
-    				
-    				
-    				CTNumVal numVal = numData.addNewPt();
-    				numVal.setIdx(idx);
-    				numVal.setV(new Double( barPtVal ).toString());
-    				
-    				String categoryLabel = barData.getCategoryLabels()[idx];
-    				CTStrVal sVal = catData.addNewPt();
-    				sVal.setIdx(idx);
-    				sVal.setV( categoryLabel);
-    				
-    				XSSFRow row = createOrGetRow(sheet, rownum);
-    				row.createCell(0).setCellValue(categoryLabel);
-    				row.createCell(seriesIdx + 1)
-    				.setCellValue(barPtVal );
-    				
-    				
-    				idx++;
-    				rownum++;
-    				
-    			}
-    			
-    			
-    			numData.getPtCount().setVal(idx);
-    			catData.getPtCount().setVal(idx);
-    			
-    			String numDataRange = new CellRangeAddress(1, rownum - 1, seriesIdx + 1, seriesIdx + 1)
-    					.formatAsString(sheet.getSheetName(), true);
-    			val.getNumRef().setF(numDataRange);
-    			
-    			String axisDataRange = new CellRangeAddress(1, rownum - 1, 0, 0)
-    					.formatAsString(sheet.getSheetName(), true);
-    			cat.getStrRef().setF(axisDataRange);
-    			
-    			seriesIdx++;
-    			
-    			
-            		
-        	}catch(IndexOutOfBoundsException ie) {
-        	    logger.info("No more series to get data from");
-        	}
-        	
-        	
-        }
-        
-        
-        //now save this chart to the ppt i.e write it to the slide
-        
-        
-        try {
+		try {
 			writeChart(template.getSlideShow(), slide, templateChart, chartSpace, workbook, relId);
 		} catch (InvalidFormatException e) {
 			// TODO Auto-generated catch block
@@ -780,1320 +382,1808 @@ public class PowerPointServiceImpl implements PowerPointService {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-        
-        
-        
-    	
+
+	}
+
+	@Override
+	public XMLSlideShow topicmap(final TopicMapData topicmap) throws TemplateLoadException {
+		final XMLSlideShow ppt = loadTemplate().getSlideShow();
+		final XSLFSlide slide = ppt.createSlide();
+
+		addTopicMap(slide, createPageAnchor(ppt), topicmap);
+
+		return ppt;
 	}
 
 	/**
-     * Internal implementation to add a sunburst chart (actually a doughnut chart) to a slide, based on a template.
-     * @param template the parsed template information.
-     * @param slide the slide to add to.
-     * @param anchor optional bounding rectangle to draw onto, in PowerPoint coordinates.
-     *               If null, we'll use the bounds from the original template chart.
-     * @param data the sunburst data.
-     * @param shapeId the slide shape ID, should be unique within the slide.
-     * @param relId the relation ID to the chart data.
-     * @throws TemplateLoadException if we can't create the sunburst; most likely due to an invalid template.
-     */
-    private static void addSunburst(final SlideShowTemplate template, final XSLFSlide slide, final Rectangle2D.Double anchor,
-    		final SunburstData data, final int shapeId, final String relId) throws TemplateLoadException {
-    	
-    	/*unwrap the data passed which should be used to populate our chart */
-        final String[] categories = data.getCategories();
-        final double[] values = data.getValues();
-        final String title = data.getTitle();
+	 * Internal implementation to add a topic map to a slide.
+	 * 
+	 * @param slide
+	 *            the slide to add to.
+	 * @param anchor
+	 *            bounding rectangle to draw onto, in PowerPoint coordinates.
+	 * @param data
+	 *            the topic map data.
+	 */
+	private static void addTopicMap(final XSLFSlide slide, final Rectangle2D.Double anchor, final TopicMapData data) {
+		for (final TopicMapData.Path reqPath : data.getPaths()) {
+			final XSLFFreeformShape shape = slide.createFreeform();
+			final Path2D.Double path = new Path2D.Double();
 
-        /*add a new graphic Frame */
-        slide.getXmlObject().getCSld().getSpTree().addNewGraphicFrame().set(template.getDoughnutChartShapeXML(relId, shapeId, "chart" + shapeId, anchor));
+			boolean first = true;
 
-        
-        System.out.println("relations after");
-        try { 
-			PackageRelationshipCollection chartRelations = slide.getPackagePart().getRelationships();
-			chartRelations.forEach((PackageRelationship rel) ->  {
-				System.out.println(rel.getTargetURI());
-					
-			}   );
+			for (double[] point : reqPath.getPoints()) {
+				final double x = point[0] * anchor.getWidth() + anchor.getMinX();
+				final double y = point[1] * anchor.getHeight() + anchor.getMinY();
+				if (first) {
+					path.moveTo(x, y);
+					first = false;
+				} else {
+					path.lineTo(x, y);
+				}
+			}
+			path.closePath();
+
+			shape.setPath(path);
+			shape.setStrokeStyle(2);
+			shape.setLineColor(Color.GRAY);
+			shape.setHorizontalCentered(true);
+			shape.setVerticalAlignment(VerticalAlignment.MIDDLE);
+			shape.setTextAutofit(TextShape.TextAutofit.NORMAL);
+
+			final XSLFTextParagraph text = shape.addNewTextParagraph();
+			final XSLFTextRun textRun = text.addNewTextRun();
+			textRun.setText(reqPath.name);
+			textRun.setFontColor(Color.WHITE);
+			textRun.setBold(true);
+
+			final CTShape cs = (CTShape) shape.getXmlObject();
+
+			double max = 100, min = 1, scale = 100;
+			final CTTextNormalAutofit autoFit = cs.getTxBody().getBodyPr().getNormAutofit();
+			final double availHeight = path.getBounds2D().getHeight();
+			final int RESIZE_ATTEMPTS = 7;
+
+			for (int attempts = 0; attempts < RESIZE_ATTEMPTS; ++attempts) {
+				// PowerPoint doesn't resize the text till you edit it once, which means the
+				// text initially looks too
+				// large when you first view the slide; so we binary-chop to get a sensible
+				// initial approximation.
+				// OpenOffice does the text resize on load so it doesn't have this problem.
+				autoFit.setFontScale(Math.max(1, (int) (scale * 1000)));
+
+				final double textHeight = shape.getTextHeight();
+				if (textHeight < availHeight) {
+					min = scale;
+					scale = 0.5 * (min + max);
+				} else if (textHeight > availHeight) {
+					max = scale;
+					scale = 0.5 * (min + max);
+				} else {
+					break;
+				}
+			}
+
+			final int opacity = (int) (100000 * reqPath.getOpacity());
+			final Color c1 = Color.decode(reqPath.getColor());
+			final Color c2 = Color.decode(reqPath.getColor2());
+
+			final CTGradientFillProperties gFill = cs.getSpPr().addNewGradFill();
+			gFill.addNewLin().setAng(3300000);
+			final CTGradientStopList list = gFill.addNewGsLst();
+
+			final CTGradientStop stop1 = list.addNewGs();
+			stop1.setPos(0);
+			final CTSRgbColor color1 = stop1.addNewSrgbClr();
+			color1.setVal(new byte[] { (byte) c1.getRed(), (byte) c1.getGreen(), (byte) c1.getBlue() });
+			color1.addNewAlpha().setVal(opacity);
+
+			final CTGradientStop stop2 = list.addNewGs();
+			stop2.setPos(100000);
+			final CTSRgbColor color2 = stop2.addNewSrgbClr();
+			color2.setVal(new byte[] { (byte) c2.getRed(), (byte) c2.getGreen(), (byte) c2.getBlue() });
+			color2.addNewAlpha().setVal(opacity);
+
+			if (reqPath.level > 0) {
+				// The nodes which aren't leaf nodes can be clicked on to hide them so you can
+				// see the nodes underneath.
+				// This only works in PowerPoint; OpenOffice doesn't seem to support it.
+				// OpenOffice has its own syntax
+				// to do something similar, but we don't use it since PowerPoint treats it as
+				// corrupt.
+				final String shapeId = Integer.toString(shape.getShapeId());
+				final CTSlide slXML = slide.getXmlObject();
+
+				final CTTimeNodeList childTnLst;
+				final CTBuildList bldLst;
+				if (!slXML.isSetTiming()) {
+					final CTSlideTiming timing = slXML.addNewTiming();
+					final CTTLCommonTimeNodeData ctn = timing.addNewTnLst().addNewPar().addNewCTn();
+					ctn.setDur("indefinite");
+					ctn.setRestart(STTLTimeNodeRestartTypeImpl.NEVER);
+					ctn.setNodeType(STTLTimeNodeType.TM_ROOT);
+					childTnLst = ctn.addNewChildTnLst();
+					bldLst = timing.addNewBldLst();
+				} else {
+					final CTSlideTiming timing = slXML.getTiming();
+					childTnLst = timing.getTnLst().getParArray(0).getCTn().getChildTnLst();
+					bldLst = timing.getBldLst();
+				}
+
+				final CTTLTimeNodeSequence seq = childTnLst.addNewSeq();
+				seq.setConcurrent(true);
+				seq.setNextAc(STTLNextActionType.SEEK);
+				final CTTLCommonTimeNodeData common = seq.addNewCTn();
+
+				common.setRestart(STTLTimeNodeRestartType.WHEN_NOT_ACTIVE);
+				common.setFill(STTLTimeNodeFillType.HOLD);
+				common.setEvtFilter("cancelBubble");
+				common.setNodeType(STTLTimeNodeType.INTERACTIVE_SEQ);
+
+				final CTTLTimeConditionList condList = common.addNewStCondLst();
+				final CTTLTimeCondition cond = condList.addNewCond();
+				cond.setEvt(STTLTriggerEvent.ON_CLICK);
+				cond.setDelay(0);
+				cond.addNewTgtEl().addNewSpTgt().setSpid(shapeId);
+
+				final CTTLTimeCondition endSync = common.addNewEndSync();
+				endSync.setEvt(STTLTriggerEvent.END);
+				endSync.setDelay(0);
+				endSync.addNewRtn().setVal(STTLTriggerRuntimeNode.ALL);
+
+				// These holdCtn* 'hold' transitions with zero delay might seem redundant; but
+				// they're exported in the
+				// PowerPoint XML, and the online PowerPoint Office365 viewer won't support the
+				// click animations
+				// unless they're present (e.g. from the 'Start Slide Show' button in the
+				// browser).
+				final CTTLCommonTimeNodeData holdCtn1 = common.addNewChildTnLst().addNewPar().addNewCTn();
+
+				holdCtn1.setFill(STTLTimeNodeFillType.HOLD);
+				holdCtn1.addNewStCondLst().addNewCond().setDelay(0);
+
+				final CTTLCommonTimeNodeData holdCtn2 = holdCtn1.addNewChildTnLst().addNewPar().addNewCTn();
+
+				holdCtn2.setFill(STTLTimeNodeFillType.HOLD);
+				holdCtn2.addNewStCondLst().addNewCond().setDelay(0);
+
+				final CTTLCommonTimeNodeData clickCtn = holdCtn2.addNewChildTnLst().addNewPar().addNewCTn();
+
+				clickCtn.setPresetID(10);
+				clickCtn.setPresetClass(STTLTimeNodePresetClassType.EXIT);
+				clickCtn.setPresetSubtype(0);
+				clickCtn.setFill(STTLTimeNodeFillType.HOLD);
+				clickCtn.setGrpId(0);
+				clickCtn.setNodeType(STTLTimeNodeType.CLICK_EFFECT);
+
+				clickCtn.addNewStCondLst().addNewCond().setDelay(0);
+
+				final CTTimeNodeList clickChildTnList = clickCtn.addNewChildTnLst();
+
+				final CTTLAnimateEffectBehavior animEffect = clickChildTnList.addNewAnimEffect();
+				animEffect.setTransition(STTLAnimateEffectTransition.OUT);
+				animEffect.setFilter("fade");
+				final CTTLCommonBehaviorData cBhvr = animEffect.addNewCBhvr();
+				final CTTLCommonTimeNodeData bhvrCtn = cBhvr.addNewCTn();
+
+				bhvrCtn.setDur(500);
+				cBhvr.addNewTgtEl().addNewSpTgt().setSpid(shapeId);
+
+				final CTTLSetBehavior clickSet = clickChildTnList.addNewSet();
+				final CTTLCommonBehaviorData clickSetBhvr = clickSet.addNewCBhvr();
+				final CTTLCommonTimeNodeData hideCtn = clickSetBhvr.addNewCTn();
+
+				hideCtn.setDur(1);
+				hideCtn.setFill(STTLTimeNodeFillType.HOLD);
+				hideCtn.addNewStCondLst().addNewCond().setDelay(499);
+
+				clickSetBhvr.addNewTgtEl().addNewSpTgt().setSpid(shapeId);
+				clickSetBhvr.addNewAttrNameLst().addAttrName("style.visibility");
+				clickSet.addNewTo().addNewStrVal().setVal("hidden");
+
+				final CTTLBuildParagraph bldP = bldLst.addNewBldP();
+				bldP.setSpid(shapeId);
+				bldP.setGrpId(0);
+				bldP.setAnimBg(true);
+			}
+		}
+	}
+
+	@Override
+	public XMLSlideShow sunburst(final SunburstData sunburst) throws TemplateLoadException {
+		if (!sunburst.validateInput()) {
+			throw new IllegalArgumentException(
+					"Number of values should match the number of categories, and color / stroke color must either be null or nonempty");
+		}
+
+		final SlideShowTemplate template = loadTemplate();
+		final XMLSlideShow ppt = template.getSlideShow();
+		final XSLFSlide slide = ppt.createSlide();
+
+		final int shapeId = 1;
+
+		addSunburst(template, slide, null, sunburst, shapeId, "relId" + shapeId);
+
+		return ppt;
+	}
+
+	@Override
+	public XMLSlideShow bar(BarData barData) throws TemplateLoadException {
+
+		if (!barData.validateInput()) {
+			throw new IllegalArgumentException("Number of seriesdata should match the number of categories");
+		}
+
+		final SlideShowTemplate template = loadTemplate();
+		final XMLSlideShow ppt = template.getSlideShow();
+		final XSLFSlide slide = ppt.createSlide();
+
+		final int shapeId = 1;
+
+		addBarChart(template, slide, null, barData, shapeId, "relId" + shapeId);
+
+		return ppt;
+	}
+
+	private static XSSFRow createOrGetRow(XSSFSheet sheet, int rownum) {
+
+		if (sheet.getRow(rownum) == null) {
+			return sheet.createRow(rownum);
+		}
+
+		return sheet.getRow(rownum);
+	}
+
+	/**
+	 * Internal implementation to add a clustered column chart to a slide, based on
+	 * a template. The max number of allowed series is equal to number of series in
+	 * the template.
+	 * 
+	 * @param template
+	 *            the parsed template information.
+	 * @param slide
+	 *            the slide to add to.
+	 * @param anchoroptional
+	 *            bounding rectangle to draw onto, in PowerPoint coordinates. If
+	 *            null, we'll use the bounds from the original template chart.
+	 * @param columnData,
+	 *            the clustered column data
+	 * @param shapeId.
+	 *            the slide shape ID, should be unique within the slide.
+	 * @param relId.
+	 *            the relation ID to the chart data.
+	 * @throws TemplateLoadException
+	 *             if we can't create the ColumnData; most likely due to an invalid
+	 *             template.
+	 */
+	private void addBarChart(final SlideShowTemplate template, final XSLFSlide slide, final Rectangle2D.Double anchor,
+			final BarData barData, final int shapeId, final String relId) throws TemplateLoadException {
+
+		if (!barData.validateInput()) {
+			throw new IllegalArgumentException("Invalid data provided");
+
+		}
+
+		/* we are building the chart in-memory */
+		/* add a new graphic Frame to our slide */
+		slide.getXmlObject().getCSld().getSpTree().addNewGraphicFrame()
+				.set(template.getBarChartShapeXML(relId, shapeId, "chart" + shapeId, anchor));
+
+		/* Sheet created.. we need to set data in this sheet while we build the chart */
+		final XSSFWorkbook workbook = new XSSFWorkbook();
+		final XSSFSheet sheet = workbook.createSheet();
+
+		/* Get the base chart from the template */
+		final XSLFChart templateChart = template.getBarChart();
+
+		final CTChartSpace chartSpace = (CTChartSpace) templateChart.getCTChartSpace().copy();
+		final CTChart ctChart = chartSpace.getChart();
+		final CTPlotArea plotArea = ctChart.getPlotArea();
+		final CTBarChart barChart = plotArea.getBarChartArray(0);
+
+		if (barChart == null) {
+			throw new IllegalStateException("Template does not have a bar chart");
+		}
+
+		/* Now start updating the chart with the data.. */
+
+		int seriesIdx = 0;
+		for (CTBarSer ctBarSer : barChart.getSerArray()) {
+
+			// get the data for this series
+			try {
+				BarData.Series barSeries = barData.getSeriesData().get(seriesIdx);
+
+				// text for this series
+				CTSerTx tx = ctBarSer.getTx();
+				tx.getStrRef().getStrCache().getPtArray(0).setV(barSeries.getLabel());
+				sheet.createRow(0).createCell(seriesIdx + 1).setCellValue(barSeries.getLabel());
+				String seriesRef = new CellReference(sheet.getSheetName(), 0, seriesIdx + 1, true, true)
+						.formatAsString();
+				tx.getStrRef().setF(seriesRef);
+
+				// category axis data
+				CTAxDataSource cat = ctBarSer.getCat();
+				CTStrData catData = cat.getStrRef().getStrCache();
+
+				// Values
+				CTNumDataSource val = ctBarSer.getVal();
+				CTNumData numData = val.getNumRef().getNumCache();
+
+				catData.setPtArray(null); // unset old axis text
+				numData.setPtArray(null); // unset old values
+
+				int idx = 0;
+				int rownum = 1;
+
+				for (double barPtVal : barSeries.getValues()) {
+
+					CTNumVal numVal = numData.addNewPt();
+					numVal.setIdx(idx);
+					numVal.setV(new Double(barPtVal).toString());
+
+					String categoryLabel = barData.getCategoryLabels()[idx];
+					CTStrVal sVal = catData.addNewPt();
+					sVal.setIdx(idx);
+					sVal.setV(categoryLabel);
+
+					XSSFRow row = createOrGetRow(sheet, rownum);
+					row.createCell(0).setCellValue(categoryLabel);
+					row.createCell(seriesIdx + 1).setCellValue(barPtVal);
+
+					idx++;
+					rownum++;
+
+				}
+
+				numData.getPtCount().setVal(idx);
+				catData.getPtCount().setVal(idx);
+
+				String numDataRange = new CellRangeAddress(1, rownum - 1, seriesIdx + 1, seriesIdx + 1)
+						.formatAsString(sheet.getSheetName(), true);
+				val.getNumRef().setF(numDataRange);
+
+				String axisDataRange = new CellRangeAddress(1, rownum - 1, 0, 0).formatAsString(sheet.getSheetName(),
+						true);
+				cat.getStrRef().setF(axisDataRange);
+
+				seriesIdx++;
+
+			} catch (IndexOutOfBoundsException ie) {
+				logger.info("No more series to get data from");
+			}
+
+		}
+
+		// now save this chart to the ppt i.e write it to the slide
+
+		try {
+			writeChart(template.getSlideShow(), slide, templateChart, chartSpace, workbook, relId);
 		} catch (InvalidFormatException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
 		}
-        
-        /*Sheet created */
-        final XSSFWorkbook workbook = new XSSFWorkbook();
-        final XSSFSheet sheet = workbook.createSheet();
-        
-        /*get base chart from template */
-        final XSLFChart baseChart = template.getDoughnutChart();
-        
-        /*we now created a copy of the chart openxml object */
-        final CTChartSpace chartSpace = (CTChartSpace) baseChart.getCTChartSpace().copy();
-        final CTChart ctChart = chartSpace.getChart();
-        final CTPlotArea plotArea = ctChart.getPlotArea();
-
-        if (StringUtils.isEmpty(title)) {
-            if (ctChart.getAutoTitleDeleted() != null) {
-                ctChart.getAutoTitleDeleted().setVal(true);
-            }
-
-            ctChart.unsetTitle();
-        }
-        
-       
-        final CTDoughnutChart donutChart = plotArea.getDoughnutChartArray(0);
-
-        final CTPieSer series = donutChart.getSerArray(0);
-
-        final CTStrRef strRef = series.getTx().getStrRef();
-        strRef.getStrCache().getPtArray(0).setV(title);
-        sheet.createRow(0).createCell(1).setCellValue(title);
-        strRef.setF(new CellReference(sheet.getSheetName(), 0, 1, true, true).formatAsString());
-
-        final CTStrRef categoryRef = series.getCat().getStrRef();
-        final CTStrData categoryData = categoryRef.getStrCache();
-        final CTNumRef numRef = series.getVal().getNumRef();
-        final CTNumData numericData = numRef.getNumCache();
-
-        final String[] fillColors = data.getColors();
-        final String[] strokeColors = data.getStrokeColors();
-        final boolean overrideFill = ArrayUtils.isNotEmpty(fillColors);
-        final boolean overrideStroke = ArrayUtils.isNotEmpty(strokeColors);
-        final boolean overrideColors = overrideFill || overrideStroke;
-        final List<CTDPt> dPtList = series.getDPtList();
-        final CTDPt templatePt = (CTDPt) dPtList.get(0).copy();
-        if (overrideColors) {
-            dPtList.clear();
-
-            final CTShapeProperties spPr = templatePt.getSpPr();
-            final CTLineProperties ln = spPr.getLn();
-
-            // We need to unset any styles on the existing template
-            if (overrideFill) {
-                unsetSpPrFills(spPr);
-            }
-
-            if (overrideStroke) {
-                unsetLineFills(ln);
-            }
-        }
-
-        categoryData.setPtArray(null);
-        numericData.setPtArray(null);
-
-        CTLegend legend = null;
-        final int[] showInLegend = data.getShowInLegend();
-        int nextLegendToShow = 0, nextLegendToShowIdx = -1;
-        if (showInLegend != null) {
-            // We need to write legendEntry elements to hide the legend for chart series we don't want.
-            // Note this only works in PowerPoint, and not OpenOffice.
-            legend = ctChart.isSetLegend() ? ctChart.getLegend() : ctChart.addNewLegend();
-            Arrays.sort(showInLegend);
-            nextLegendToShow = showInLegend[++nextLegendToShowIdx];
-        }
-
-        for(int idx = 0; idx < values.length; ++idx) {
-            final CTStrVal categoryPoint = categoryData.addNewPt();
-            categoryPoint.setIdx(idx);
-            categoryPoint.setV(categories[idx]);
-
-            final CTNumVal numericPoint = numericData.addNewPt();
-            numericPoint.setIdx(idx);
-            numericPoint.setV(Double.toString(values[idx]));
-
-            if (overrideColors) {
-                final CTDPt copiedPt = (CTDPt) templatePt.copy();
-                copiedPt.getIdx().setVal(idx);
-
-                if (overrideFill) {
-                    final Color color = Color.decode(fillColors[idx % fillColors.length]);
-                    final CTSolidColorFillProperties fillClr = copiedPt.getSpPr().addNewSolidFill();
-                    fillClr.addNewSrgbClr().setVal(new byte[]{ (byte) color.getRed(), (byte) color.getGreen(), (byte) color.getBlue()});
-                }
-
-                if (overrideStroke) {
-                    final Color strokeColor = Color.decode(strokeColors[idx % strokeColors.length]);
-                    final CTSolidColorFillProperties strokeClr = copiedPt.getSpPr().getLn().addNewSolidFill();
-                    strokeClr.addNewSrgbClr().setVal(new byte[]{ (byte) strokeColor.getRed(), (byte) strokeColor.getGreen(), (byte) strokeColor.getBlue()});
-                }
-
-                dPtList.add(copiedPt);
-            }
-
-            if (legend != null) {
-                // We're hiding some legend elements. Should we show this index?
-                if (nextLegendToShow == idx) {
-                    // We show this index, find the next one to show.
-                    ++nextLegendToShowIdx;
-                    if (nextLegendToShowIdx < showInLegend.length) {
-                        nextLegendToShow = showInLegend[nextLegendToShowIdx];
-                    }
-                }
-                else {
-                    // We hide this index. If there's already a matching legend entry in the XML, update it,
-                    //   otherwise we create a new legend entry.
-                    boolean found = false;
-                    for (int ii = 0, max = legend.sizeOfLegendEntryArray(); ii < max; ++ii) {
-                        final CTLegendEntry legendEntry = legend.getLegendEntryArray(ii);
-                        final CTUnsignedInt idxLegend = legendEntry.getIdx();
-                        if (idxLegend != null && idxLegend.getVal() == idx) {
-                            found = true;
-                            if (legendEntry.isSetDelete()) {
-                                legendEntry.getDelete().setVal(true);
-                            }
-                            else {
-                                legendEntry.addNewDelete().setVal(true);
-                            }
-                        }
-                    }
-
-                    if (!found) {
-                        final CTLegendEntry idxLegend = legend.addNewLegendEntry();
-                        idxLegend.addNewIdx().setVal(idx);
-                        idxLegend.addNewDelete().setVal(true);
-                    }
-                }
-            }
-
-            XSSFRow row = sheet.createRow(idx + 1);
-            row.createCell(0).setCellValue(categories[idx]);
-            row.createCell(1).setCellValue(values[idx]);
-        }
-        //loop ends
-        
-        categoryData.getPtCount().setVal(categories.length);
-        numericData.getPtCount().setVal(values.length);
-
-        categoryRef.setF(new CellRangeAddress(1, values.length, 0, 0).formatAsString(sheet.getSheetName(), true));
-        numRef.setF(new CellRangeAddress(1, values.length, 1, 1).formatAsString(sheet.getSheetName(), true));
-
-        try {
-            writeChart(template.getSlideShow(), slide, baseChart, chartSpace, workbook, relId);
-        }
-        catch(IOException|InvalidFormatException e) {
-            throw new TemplateLoadException("Error writing chart in loaded template", e);
-        }
-    }
-
-    
-    private static void unsetLineFills(final CTLineProperties ln) {
-        if (ln.isSetSolidFill()) {
-            ln.unsetSolidFill();
-        }
-        if (ln.isSetPattFill()) {
-            ln.unsetPattFill();
-        }
-        if (ln.isSetGradFill()) {
-            ln.unsetGradFill();
-        }
-        if (ln.isSetNoFill()) {
-            ln.unsetNoFill();
-        }
-    }
-
-    private static void unsetSpPrFills(final CTShapeProperties spPr) {
-        if (spPr.isSetBlipFill()) {
-            spPr.unsetBlipFill();
-        }
-        if (spPr.isSetGradFill()) {
-            spPr.unsetGradFill();
-        }
-        if (spPr.isSetGrpFill()) {
-            spPr.unsetGrpFill();
-        }
-        if (spPr.isSetNoFill()) {
-            spPr.unsetNoFill();
-        }
-        if (spPr.isSetSolidFill()) {
-            spPr.unsetSolidFill();
-        }
-        if (spPr.isSetPattFill()) {
-            spPr.unsetPattFill();
-        }
-    }
-
-    @Override
-    public XMLSlideShow table(final TableData tableData, final String title) throws TemplateLoadException {
-        final int rows = tableData.getRows(),
-                  cols = tableData.getCols();
-        final String[] data = tableData.getCells();
-
-        final XMLSlideShow ppt = loadTemplate().getSlideShow();
-        final XSLFSlide sl = ppt.createSlide();
-
-        final Rectangle2D.Double pageAnchor = createPageAnchor(ppt);
-
-        final double textHeight;
-
-        if (StringUtils.isNotBlank(title)) {
-            textHeight = 0.1 * pageAnchor.getHeight();
-            final XSLFTextBox textBox = sl.createTextBox();
-            textBox.setText(title);
-            textBox.setHorizontalCentered(true);
-            textBox.setTextAutofit(TextShape.TextAutofit.SHAPE);
-            textBox.setAnchor(startingSpace(pageAnchor, textHeight));
-        }
-        else {
-            textHeight = 0;
-        }
-
-        addTable(sl, remainingSpace(pageAnchor, textHeight), rows, cols, data, false);
-
-        return ppt;
-    }
-
-    /**
-     * Utility function to compute bounds for a shape in PowerPoint coordinates, given the bounds of the original
-     *   free space available and a measure of the shape's height.
-     * @param pageAnchor the available bounds in PowerPoint coordinates.
-     * @param space the height of the shape.
-     * @return the bounds for the shape.
-     */
-    private static Rectangle2D.Double startingSpace(final Rectangle2D.Double pageAnchor, final double space) {
-        return new Rectangle2D.Double(
-                pageAnchor.getMinX(),
-                pageAnchor.getMinY(),
-                pageAnchor.getWidth(),
-                space);
-    }
-
-    /**
-     * Utility function to compute the bounds for the remaining space, given the bounds of the original
-     *   free space available and the amount of vertical height already taken.
-     * @param pageAnchor the available bounds in PowerPoint coordinates.
-     * @param usedSpace how much height is already taken.
-     * @return the bounds for the remaining space under the used space.
-     */
-    private static Rectangle2D.Double remainingSpace(final Rectangle2D.Double pageAnchor, final double usedSpace) {
-        return new Rectangle2D.Double(
-                pageAnchor.getMinX(),
-                pageAnchor.getMinY() + usedSpace,
-                pageAnchor.getWidth(),
-                Math.max(1, pageAnchor.getHeight() - usedSpace));
-    }
-
-    /**
-     * Internal implementation to add a table to a slide.
-     * @param slide the slide to add to.
-     * @param anchor bounding rectangle to draw onto, in PowerPoint coordinates.
-     * @param rows number of rows.
-     * @param cols number of columns.
-     * @param data the data for each cell, laid out row-by-row.
-     * @param crop whether we should try and crop the table to the bounding rectangle by removing extra rows.
-     *               This doesn't guarantee an exact match, since the font metrics may not exactly match.
-     */
-    private static void addTable(final XSLFSlide slide, final Rectangle2D.Double anchor, final int rows, final int cols, final String[] data, final boolean crop) {
-        final XSLFTable table = slide.createTable(rows, cols);
-
-        int idx = 0;
-
-        double availWidth = anchor.getWidth();
-        double tableW = 0;
-
-        if (cols == 2) {
-            // In the most common situation, there's a count column which should be relatively smaller.
-            // Make it take 10%, or 70 pixels, whichever is bigger, unless that's more than 50% of the overall space.
-            final double minCountWidth = 70;
-            final double countColWidth = Math.min(0.5 * availWidth, Math.max(minCountWidth, availWidth * 0.1));
-            table.setColumnWidth(0, availWidth - countColWidth);
-            table.setColumnWidth(1, countColWidth);
-            tableW += table.getColumnWidth(0);
-            tableW += table.getColumnWidth(1);
-        }
-        else {
-            for(int col = 0; col < cols; ++col) {
-                table.setColumnWidth(col, availWidth / cols);
-                tableW += table.getColumnWidth(col);
-            }
-        }
-
-        // PowerPoint won't auto-shrink the table for you; and the POI API can't calculate the heights, so we just
-        //   have to assume the total row heights add up to be the table height.
-        double tableH = 0;
-
-        for(int row = 0; row < rows; ++row) {
-            for(int col = 0; col < cols; ++col) {
-                final XSLFTableCell cell = table.getCell(row, col);
-                cell.setText(data[idx++]);
-
-                for(final TableCell.BorderEdge edge : TableCell.BorderEdge.values()) {
-                    cell.setBorderColor(edge, Color.BLACK);
-                }
-            }
-
-            final double nextH = tableH + table.getRowHeight(row);
-
-            if (crop && nextH > anchor.getHeight() && row < rows - 1) {
-                // If it doesn't fit, merge all the final row cells together and label them with an ellipsis.
-                table.mergeCells(row, row, 0, cols - 1);
-                table.getCell(row, 0).setText("\u2026");
-                break;
-            }
-            else {
-                tableH = nextH;
-            }
-            
-            
-        }
-
-        final double width = Math.min(tableW, availWidth);
-
-        table.setAnchor(new Rectangle2D.Double(anchor.getMinX() + 0.5 * (availWidth - width), anchor.getMinY(), width, Math.min(tableH, anchor.getHeight())));
-      
-    }
-
-    @Override
-    public XMLSlideShow map(final MapData map, final String title) throws TemplateLoadException {
-        final String image = map.getImage();
-
-        final XMLSlideShow ppt = loadTemplate().getSlideShow();
-        final XSLFSlide sl = ppt.createSlide();
-
-        final Rectangle2D.Double pageAnchor = createPageAnchor(ppt);
-        final double textHeight;
-
-        if (StringUtils.isNotBlank(title)) {
-            textHeight = 0.1 * pageAnchor.getHeight();
-
-            final XSLFTextBox textBox = sl.createTextBox();
-            textBox.clearText();
-            final XSLFTextParagraph paragraph = textBox.addNewTextParagraph();
-            paragraph.setTextAlign(TextParagraph.TextAlign.CENTER);
-            paragraph.addNewTextRun().setText(title);
-            textBox.setHorizontalCentered(true);
-            textBox.setTextAutofit(TextShape.TextAutofit.SHAPE);
-            textBox.setAnchor(startingSpace(pageAnchor, textHeight));
-        }
-        else {
-            textHeight = 0;
-        }
-
-        final XSLFPictureData picture = addPictureData(imageSource, ppt, image);
-        addMap(sl, remainingSpace(pageAnchor, textHeight), picture, map.getMarkers());
-
-        return ppt;
-    }
-
-    /**
-     * Utility function to add image data to a PowerPoint presentation.
-     * @param imageSource the image source.
-     * @param ppt the presentation to add to.
-     * @param imageId the image identifier, typically a URI.
-     * @return the picture data.
-     */
-    private static XSLFPictureData addPictureData(final ImageSource imageSource, final XMLSlideShow ppt, final String imageId) {
-        final ImageData imageData = imageSource.getImageData(imageId);
-        return ppt.addPicture(imageData.getData(), imageData.getType());
-    }
-
-    /**
-     * Internal implementation to add an image (a world map, though other image data is also fine) to a slide.
-     *   Preserves the original image's aspect ratio, leaving blank space below and to the sides of the image.
-     * @param slide the slide to add to.
-     * @param anchor bounding rectangle to draw onto, in PowerPoint coordinates.
-     * @param picture the picture data.
-     * @param markers an array of markers to draw over the map.
-     * @return the picture shape object added to the slide.
-     */
-    private static XSLFPictureShape addMap(final XSLFSlide slide, final Rectangle2D.Double anchor, final XSLFPictureData picture, final Marker[] markers) {
-        double tgtW = anchor.getWidth(),
-               tgtH = anchor.getHeight();
-
-        final Dimension size = picture.getImageDimension();
-        final double ratio = size.getWidth() / size.getHeight();
-
-        if(ratio > tgtW / tgtH) {
-            // source image is wider than target, clip fixed width variable height
-            tgtH = tgtW / ratio;
-        }
-        else {
-            tgtW = tgtH * ratio;
-        }
-
-        final XSLFPictureShape canvas = slide.createPicture(picture);
-        // Vertically align top, horizontally-align center
-        final double offsetX = anchor.getMinX() + 0.5 * (anchor.getWidth() - tgtW),
-                     offsetY = anchor.getMinY();
-        canvas.setAnchor(new Rectangle2D.Double(offsetX, offsetY, tgtW, tgtH));
-
-        for(Marker marker : markers) {
-            final Color color = Color.decode(marker.getColor());
-            final double centerX = offsetX + marker.getX() * tgtW;
-            final double centerY = offsetY + marker.getY() * tgtH;
-
-            if(marker.isCluster()) {
-                final XSLFGroupShape group = slide.createGroup();
-                double halfMark = 10;
-                double mark = halfMark * 2;
-                double innerHalfMark = 7;
-                double innerMark = innerHalfMark * 2;
-                // align these so the middle is the latlng position
-                final Rectangle2D.Double groupAnchor = new Rectangle2D.Double(centerX - halfMark, centerY - halfMark, mark, mark);
-
-                group.setAnchor(groupAnchor);
-                group.setInteriorAnchor(groupAnchor);
-
-                final XSLFAutoShape shape = group.createAutoShape();
-                shape.setShapeType(ShapeType.ELLIPSE);
-                final boolean fade = marker.isFade();
-                // There's a 0.3 alpha transparency (255 * 0.3 is 76) when a marker is faded out
-                final int FADE_ALPHA = 76;
-                shape.setFillColor(transparentColor(color, fade ? 47 : 154));
-                shape.setAnchor(groupAnchor);
-
-                final XSLFAutoShape inner = group.createAutoShape();
-                inner.setFillColor(fade ? transparentColor(color, FADE_ALPHA) : color);
-                inner.setLineWidth(0.1);
-                inner.setLineColor(new Color((int) (color.getRed() * 0.9), (int) (color.getGreen() * 0.9), (int) (color.getBlue() * 0.9), fade ? FADE_ALPHA : 255));
-                inner.setShapeType(ShapeType.ELLIPSE);
-                inner.setHorizontalCentered(true);
-                inner.setWordWrap(false);
-                inner.setVerticalAlignment(VerticalAlignment.MIDDLE);
-                inner.clearText();
-                final XSLFTextParagraph para = inner.addNewTextParagraph();
-                para.setTextAlign(TextParagraph.TextAlign.CENTER);
-                final XSLFTextRun text = para.addNewTextRun();
-                text.setFontSize(6.0);
-                final Color fontColor = Color.decode(StringUtils.defaultString(marker.getFontColor(), "#000000"));
-                text.setFontColor(fade ? transparentColor(fontColor, FADE_ALPHA) : fontColor);
-                text.setText(marker.getText());
-                inner.setAnchor(new Rectangle2D.Double(centerX - innerHalfMark, centerY - innerHalfMark, innerMark, innerMark));
-            }
-            else {
-                final XSLFGroupShape group = slide.createGroup();
-
-                final XSLFFreeformShape shape = group.createFreeform();
-                shape.setHorizontalCentered(true);
-                shape.setWordWrap(false);
-
-                shape.setVerticalAlignment(VerticalAlignment.BOTTOM);
-                shape.setLineWidth(0.5);
-                shape.setLineColor(color.darker());
-                shape.setFillColor(transparentColor(color, 210));
-
-                final double
-                    halfMark = 8,
-                    mark = halfMark * 2,
-                    extension = 0.85,
-                    markerHeight = (0.5 + extension) * mark,
-                    angle = Math.asin(0.5/ extension) * 180 / Math.PI;
-
-                // Set group position
-                group.setAnchor(new Rectangle2D.Double(centerX - halfMark, centerY - markerHeight, mark, markerHeight));
-                group.setInteriorAnchor(new Rectangle2D.Double(0, 0, mark, markerHeight));
-
-                // Draw a semicircle and a triangle to represent the marker, pointing at the precise x,y location
-                final Path2D.Double path = new Path2D.Double();
-                path.moveTo(halfMark, markerHeight);
-                path.append(new Arc2D.Double(0, 0, mark, mark, -angle, 180 + angle + angle, Arc2D.OPEN), true);
-                path.lineTo(halfMark, markerHeight);
-                shape.setPath(path);
-                shape.setAnchor(new Rectangle2D.Double(0, 0, mark, markerHeight));
-
-                final XSLFAutoShape disc = group.createAutoShape();
-                disc.setShapeType(ShapeType.DONUT);
-                final double discRadius = 0.25 * mark;
-                final double discDiameter = 2 * discRadius;
-                disc.setAnchor(new Rectangle2D.Double(halfMark - discRadius, halfMark - discRadius, discDiameter, discDiameter));
-                disc.setFillColor(Color.WHITE);
-                disc.setLineColor(Color.WHITE);
-
-                if(StringUtils.isNotEmpty(marker.getText())) {
-                    final PackageRelationship rel = shape.getSheet().getPackagePart().addRelationship(slide.getPackagePart().getPartName(),
-                            TargetMode.INTERNAL, XSLFRelation.SLIDE.getRelation());
-                    // We create a hyperlink which links back to this slide; so we get hover-over-detail-text on the marker
-                    // Annoyingly, you can't put a link on the group, just on the individual shapes.
-                    for(XSLFShape clickable : group.getShapes()) {
-                        final CTHyperlink link = ((CTShape) clickable.getXmlObject()).getNvSpPr().getCNvPr().addNewHlinkClick();
-                        link.setTooltip(marker.getText());
-                        link.setId(rel.getId());
-                        link.setAction("ppaction://hlinksldjump");
-                    }
-                }
-            }
-        }
-
-        return canvas;
-    }
-
-    /**
-     * Utility function to create a semi-transparent variant of a given colour.
-     * @param color the original colour.
-     * @param a alpha, as a value from 0 (transparent) to 255 (opaque).
-     * @return colour with transparency set.
-     */
-    private static Color transparentColor(final Color color, final int a) {
-        return new Color(color.getRed(), color.getGreen(), color.getBlue(), a);
-    }
-
-    @Override
-    public XMLSlideShow list(final ListData documentList, final String results, final String sortBy) throws TemplateLoadException {
-        final XMLSlideShow ppt = loadTemplate().getSlideShow();
-
-        addList(imageSource, ppt, null, createPageAnchor(ppt), true, documentList, results, sortBy);
-
-        return ppt;
-    }
-
-    /**
-     * Internal implementation to add a list of documents to a presentation; either as a single slide or a series of slides.
-     * @param imageSource the image source to convert images to data.
-     * @param ppt the presentation to add to.
-     * @param sl the slide to add to (can be null if pagination is enabled).
-     * @param anchor bounding rectangle to draw onto, in PowerPoint coordinates.
-     * @param paginate whether to render results as multiple slides if they don't fit on one slide.
-     * @param data the documents to render.
-     * @param results optional string to render into the top-left corner of the available space.
-     *                  Will appear on each page if pagination is enabled.
-     * @param sortBy optional string to render into the top-right corner of the available space.
-     *                  Will appear on each page if pagination is enabled.
-     */
-    private static void addList(final ImageSource imageSource, final XMLSlideShow ppt, XSLFSlide sl, final Rectangle2D.Double anchor, final boolean paginate, final ListData data, final String results, final String sortBy) {
-        final double
-                // How much space to leave at the left and right edge of the slide
-                xMargin = 20,
-                // How much space to leave at the top
-                yMargin = 5,
-                // Size of the icon
-                iconWidth = 20, iconHeight = 24,
-                // Find's thumbnail height is 97px by 55px, hardcoded in the CSS in .document-thumbnail
-                thumbScale = 0.8,
-                thumbW = 97 * thumbScale, thumbH = 55 * thumbScale,
-                // Margin around the thumbnail
-                thumbMargin = 4.,
-                // Space between list items
-                listItemMargin = 5.;
-
-        final Pattern highlightPattern = Pattern.compile("<HavenSearch-QueryText-Placeholder>(.*?)</HavenSearch-QueryText-Placeholder>");
-
-        double yCursor = yMargin + anchor.getMinY(), xCursor = xMargin + anchor.getMinX();
-
-        int docsOnPage = 0;
-
-        final Document[] docs = data.getDocs();
-        for(int docIdx = 0; docIdx < docs.length; ++docIdx) {
-            final Document doc = docs[docIdx];
-
-            if(sl == null) {
-                sl = ppt.createSlide();
-                yCursor = yMargin + anchor.getMinY();
-                xCursor = xMargin + anchor.getMinX();
-                docsOnPage = 0;
-
-                double yStep = 0;
-
-                if (StringUtils.isNotBlank(results)) {
-                    final XSLFTextBox textBox = sl.createTextBox();
-                    textBox.clearText();
-                    final Rectangle2D.Double textBounds = new Rectangle2D.Double(xCursor, yCursor, Math.max(0, anchor.getMaxX() - xCursor - xMargin), 20);
-                    textBox.setAnchor(textBounds);
-
-                    addTextRun(textBox.addNewTextParagraph(), results, 12., Color.LIGHT_GRAY);
-
-                    yStep = textBox.getTextHeight();
-                }
-
-                if (StringUtils.isNotBlank(sortBy)) {
-                    final XSLFTextBox sortByEl = sl.createTextBox();
-                    sortByEl.clearText();
-                    final XSLFTextParagraph sortByText = sortByEl.addNewTextParagraph();
-                    sortByText.setTextAlign(TextParagraph.TextAlign.RIGHT);
-
-                    addTextRun(sortByText, sortBy, 12., Color.LIGHT_GRAY);
-
-                    sortByEl.setAnchor(new Rectangle2D.Double(xCursor, yCursor, Math.max(0, anchor.getMaxX() - xCursor - xMargin), 20));
-
-                    yStep = Math.max(sortByEl.getTextHeight(), yStep);
-                }
-
-                if (yStep > 0) {
-                    yCursor += listItemMargin + yStep;
-                }
-            }
-
-            XSLFAutoShape icon = null;
-            if (data.isDrawIcons()) {
-                icon = sl.createAutoShape();
-                icon.setShapeType(ShapeType.SNIP_1_RECT);
-                icon.setAnchor(new Rectangle2D.Double(xCursor, yCursor + listItemMargin, iconWidth, iconHeight));
-                icon.setLineColor(Color.decode("#888888"));
-                icon.setLineWidth(2.0);
-
-                xCursor += iconWidth;
-            }
-
-            final XSLFTextBox listEl = sl.createTextBox();
-            listEl.clearText();
-            listEl.setAnchor(new Rectangle2D.Double(xCursor, yCursor, Math.max(0, anchor.getMaxX() - xCursor - xMargin), Math.max(0, anchor.getMaxY() - yCursor)));
-
-            final XSLFTextParagraph titlePara = listEl.addNewTextParagraph();
-            addTextRun(titlePara, doc.getTitle(), data.getTitleFontSize(), Color.BLACK).setBold(true);
-
-            if (StringUtils.isNotBlank(doc.getDate())) {
-                final XSLFTextParagraph datePara = listEl.addNewTextParagraph();
-                datePara.setLeftMargin(5.);
-                addTextRun(datePara, doc.getDate(), data.getDateFontSize(), Color.GRAY).setItalic(true);
-            }
-
-            if (StringUtils.isNotBlank(doc.getRef())) {
-                addTextRun(listEl.addNewTextParagraph(), doc.getRef(), data.getRefFontSize(), Color.GRAY);
-            }
-
-            final double thumbnailOffset = listEl.getTextHeight();
-
-            final XSLFTextParagraph contentPara = listEl.addNewTextParagraph();
-
-            Rectangle2D.Double pictureAnchor = null;
-            XSLFPictureData pictureData = null;
-
-            if (StringUtils.isNotBlank(doc.getThumbnail())) {
-                try {
-                    // Picture reuse is automatic
-                    pictureData = addPictureData(imageSource, ppt, doc.getThumbnail());
-                    // We reserve space for the picture, but we don't actually add it yet.
-                    // The reason is we may have to remove it later if it doesn't fit; but due to a quirk of OpenOffice,
-                    //   deleting the picture shape removes the pictureData as well; which is a problem since the
-                    //   pictureData can be shared between multiple pictures.
-                    pictureAnchor = new Rectangle2D.Double(xCursor, yCursor + thumbnailOffset + thumbMargin, thumbW, thumbH);
-
-                    // If there is enough horizontal space, put the text summary to the right of the thumbnail image,
-                    //    otherwise put it under the thumbnail,
-                    if (listEl.getAnchor().getWidth() > 2.5 * thumbW) {
-                        contentPara.setLeftMargin(thumbW);
-                    }
-                    else {
-                        contentPara.addLineBreak().setFontSize(thumbH);
-                    }
-
-                }
-                catch(RuntimeException e) {
-                    // if there's any errors, we'll just ignore the image
-                }
-            }
-
-            final String rawSummary = doc.getSummary();
-            if (StringUtils.isNotBlank(rawSummary)) {
-                // HTML treats newlines and multiple whitespace as a single whitespace.
-                final String summary = rawSummary.replaceAll("\\s+", " ");
-                final Matcher matcher = highlightPattern.matcher(summary);
-                int idx = 0;
-
-                while(matcher.find()) {
-                    final int start = matcher.start();
-
-                    if (idx < start) {
-                        addTextRun(contentPara, summary.substring(idx, start), data.getSummaryFontSize(), Color.DARK_GRAY);
-                    }
-
-                    addTextRun(contentPara, matcher.group(1), data.getSummaryFontSize(), Color.DARK_GRAY).setBold(true);
-                    idx = matcher.end();
-                }
-
-                if (idx < summary.length()) {
-                    addTextRun(contentPara, summary.substring(idx), data.getSummaryFontSize(), Color.DARK_GRAY);
-                }
-            }
-
-            double elHeight = Math.max(listEl.getTextHeight(), iconHeight);
-            if (pictureAnchor != null) {
-                elHeight = Math.max(elHeight, pictureAnchor.getMaxY() - yCursor);
-            }
-
-            yCursor += elHeight;
-            xCursor = xMargin + anchor.getMinX();
-
-            docsOnPage++;
-
-            if (yCursor > anchor.getMaxY()) {
-                if (docsOnPage > 1) {
-                    // If we drew more than one list element on this page; and we exceeded the available space,
-                    //   delete the last element's shapes and redraw it on the next page.
-                    // We don't have to remove the picture since we never added it.
-                    sl.removeShape(listEl);
-                    if (icon != null) {
-                        sl.removeShape(icon);
-                    }
-
-                    --docIdx;
-                }
-                else if(pictureAnchor != null) {
-                    // We've confirmed we need the picture, add it.
-                    sl.createPicture(pictureData).setAnchor(pictureAnchor);
-                }
-
-                sl = null;
-
-                if (!paginate) {
-                    break;
-                }
-            }
-            else {
-                yCursor += listItemMargin;
-
-                if(pictureAnchor != null) {
-                    // We've confirmed we need the picture, add it.
-                    sl.createPicture(pictureData).setAnchor(pictureAnchor);
-                }
-            }
-        }
-    }
-
-    /**
-     * Utility function to create a text run with specified formatting.
-     * @param paragraph the paragraph to add to.
-     * @param text the text string to add, can contain e.g. '\n' for newlines.
-     * @param fontSize font size.
-     * @param color font colour.
-     * @return the new text run which was added to the paragraph.
-     */
-    private static XSLFTextRun addTextRun(final XSLFTextParagraph paragraph, final String text, final double fontSize, final Color color) {
-        final XSLFTextRun summary = paragraph.addNewTextRun();
-        summary.setFontColor(color);
-        summary.setText(text);
-        summary.setFontSize(fontSize);
-        return summary;
-    }
-
-    @Override
-    public XMLSlideShow graph(
-            final DategraphData data
-    ) throws TemplateLoadException {
-        final SlideShowTemplate template = loadTemplate();
-        final XMLSlideShow ppt = template.getSlideShow();
-        final int shapeId = 1;
-        final String relId = "relId" + shapeId;
-
-        addDategraph(template, ppt.createSlide(), null, data, shapeId, relId);
-
-        return ppt;
-    }
-
-    /**
-     * Internal implementation to add a date graph (aka xy scatterplot chart with time-series x-axis) to a slide, based on a template.
-     * @param template the parsed template information.
-     * @param slide the slide to add to.
-     * @param anchor optional bounding rectangle to draw onto, in PowerPoint coordinates.
-     *               If null, we'll use the bounds from the original template chart.
-     * @param data the date graph data.
-     * @param shapeId the slide shape ID, should be unique within the slide.
-     * @param relId the relation ID to the chart data.
-     * @throws TemplateLoadException if we can't create the date graph; most likely due to an invalid template.
-     */
-    private static void addDategraph(final SlideShowTemplate template, final XSLFSlide slide, final Rectangle2D.Double anchor, 
-    		final DategraphData data, final int shapeId, final String relId) throws TemplateLoadException {
-        if (!data.validateInput()) {
-            throw new IllegalArgumentException("Invalid data provided");
-        }
-
-        final List<DategraphData.Row> rows = data.getRows();
-        boolean useSecondaryAxis = rows.stream().anyMatch(DategraphData.Row::isSecondaryAxis);
-
-        if (rows.stream().allMatch(DategraphData.Row::isSecondaryAxis)) {
-            // If everything is on the secondary axis; just use the primary axis
-            rows.forEach(row -> row.setSecondaryAxis(false));
-            useSecondaryAxis = false;
-        }
-
-        final XSSFWorkbook wb = writeChart(data);
-
-        final XMLSlideShow ppt = template.getSlideShow();
-
-        slide.getXmlObject().getCSld().getSpTree().addNewGraphicFrame().set(template.getGraphChartShapeXML(relId, shapeId, "chart" + shapeId, anchor));
-
-        XSLFChart baseChart = template.getGraphChart();
-        final CTChartSpace chartSpace = (CTChartSpace) baseChart.getCTChartSpace().copy();
-
-        final CTChart ctChart = chartSpace.getChart();
-        final CTPlotArea plotArea = ctChart.getPlotArea();
-        final XSSFSheet sheet = wb.getSheetAt(0);
-
-        // In the template, we have two <c:scatterChart> objects, one for the primary axis, one for the secondary.
-        if (!useSecondaryAxis) {
-            // Discard the extra chart and its two axes.
-            // OpenOffice is happy enough if you remove the scatterplot chart, but PowerPoint will complain it's a corrupt
-            //   file and unhelpfully delete the entire chart when you choose 'repair' if any orphan axes remain.
-            plotArea.removeScatterChart(1);
-            plotArea.removeValAx(3);
-            plotArea.removeValAx(2);
-        }
-
-        for(CTScatterChart ctScatterChart : plotArea.getScatterChartArray()) {
-            for(final CTScatterSer ser : ctScatterChart.getSerArray()) {
-                ser.getDPtList().clear();
-            }
-        }
-
-        int primarySeriesCount = 0;
-        int secondarySeriesCount = 0;
-
-        for (int seriesIdx = 0; seriesIdx < rows.size(); ++seriesIdx) {
-            final DategraphData.Row row = rows.get(seriesIdx);
-
-            final CTScatterChart tgtChart = plotArea.getScatterChartArray(row.isSecondaryAxis() ? 1 : 0);
-
-            final CTScatterSer[] serArray = tgtChart.getSerArray();
-            final int createdSeriesIdx = row.isSecondaryAxis() ? secondarySeriesCount++ : primarySeriesCount++;
-
-            final CTScatterSer curSeries;
-
-            if (createdSeriesIdx < serArray.length) {
-                curSeries = serArray[createdSeriesIdx];
-            }
-            else {
-                curSeries = tgtChart.addNewSer();
-                curSeries.set(serArray[0].copy());
-            }
-
-            updateCTScatterSer(data, sheet, seriesIdx, curSeries);
-        }
-
-        try {
-            writeChart(ppt, slide, baseChart, chartSpace, wb, relId);
-        }
-        catch(IOException|InvalidFormatException e) {
-            throw new TemplateLoadException("Unexpected error writing files from loaded template", e);
-        }
-    }
-
-    /**
-     * Utility function to update a scatterplot line's data series.
-     * @param data the datagraph data.
-     * @param sheet the Excel sheet which contains corresponding data from the scatterplot data series.
-     * @param seriesIdx the index of the data in the dategraph data.
-     * @param series the XML object representing the series in the chart.
-     */
-    private static void updateCTScatterSer(final DategraphData data, final XSSFSheet sheet, final int seriesIdx, final CTScatterSer series) {
-        final String sheetName = sheet.getSheetName();
-
-        // the series idx starts from 0
-        final DategraphData.Row row = data.getRows().get(seriesIdx);
-        final String title = row.getLabel();
-        final Color color = Color.decode(row.getColor());
-
-        series.getOrder().setVal(seriesIdx);
-        series.getIdx().setVal(seriesIdx);
-
-        final CTSolidColorFillProperties fill = series.getSpPr().getLn().getSolidFill();
-
-        // We have to set any possible colour type, PowerPoint throws an error if there's multiple fills, and we don't
-        //   know what colour type the user may have used in their template slide.
-        if (fill.getSchemeClr() != null) {
-            fill.unsetSchemeClr();
-        }
-        if (fill.getSrgbClr() != null) {
-            fill.unsetSrgbClr();
-        }
-        if (fill.getHslClr() != null) {
-            fill.unsetHslClr();
-        }
-        if (fill.getPrstClr() != null) {
-            fill.unsetPrstClr();
-        }
-        if (fill.getScrgbClr() != null) {
-            fill.unsetScrgbClr();
-        }
-        if (fill.getSysClr() != null) {
-            fill.unsetSysClr();
-        }
-
-        final CTSRgbColor fillClr = fill.addNewSrgbClr();
-        final byte[] colorBytes = {(byte) color.getRed(), (byte) color.getGreen(), (byte) color.getBlue()};
-        fillClr.setVal(colorBytes);
-
-        final CTMarker marker = series.getMarker();
-
-        if (marker != null) {
-            final CTShapeProperties markerSpPr = marker.getSpPr();
-            unsetSpPrFills(markerSpPr);
-            markerSpPr.addNewSolidFill().addNewSrgbClr().setVal(colorBytes);
-
-            final CTLineProperties markerLn = markerSpPr.getLn();
-            if (markerLn != null) {
-                unsetLineFills(markerLn);
-                markerLn.addNewSolidFill().addNewSrgbClr().setVal(colorBytes);
-            }
-        }
-
-        final CTStrRef strRef = series.getTx().getStrRef();
-        strRef.getStrCache().getPtArray()[0].setV(title);
-
-        strRef.setF(new CellReference(sheetName, 0, seriesIdx + 1, true, true).formatAsString());
-
-        final long[] timestamps = data.getTimestamps();
-        {
-            final CTNumRef timestampCatNumRef = series.getXVal().getNumRef();
-            timestampCatNumRef.setF(new AreaReference(
-                new CellReference(sheetName, 1, 0, true, true),
-                new CellReference(sheetName, 1 + timestamps.length, 0, true, true)
-            ).formatAsString());
-
-            final CTNumData timeStampCatNumCache = timestampCatNumRef.getNumCache();
-            timeStampCatNumCache.getPtCount().setVal(timestamps.length);
-            timeStampCatNumCache.setPtArray(null);
-
-            for(int ii = 0; ii < timestamps.length; ++ii) {
-                final CTNumVal pt = timeStampCatNumCache.addNewPt();
-                pt.setIdx(ii);
-                pt.setV(sheet.getRow(1 + ii).getCell(0).getRawValue());
-            }
-        }
-
-        {
-            final double[] seriesData = row.getValues();
-
-            final CTNumRef valuesNumRef = series.getYVal().getNumRef();
-            valuesNumRef.setF(new AreaReference(
-                new CellReference(sheetName, 1, seriesIdx + 1, true, true),
-                new CellReference(sheetName, 1 + timestamps.length, seriesIdx + 1, true, true)
-            ).formatAsString());
-
-            final CTNumData valuesNumCache = valuesNumRef.getNumCache();
-            valuesNumCache.getPtCount().setVal(timestamps.length);
-            valuesNumCache.setPtArray(null);
-
-            for(int ii = 0; ii < timestamps.length; ++ii) {
-                final CTNumVal pt = valuesNumCache.addNewPt();
-                pt.setIdx(ii);
-                pt.setV(Double.toString(seriesData[ii]));
-            }
-        }
-    }
-
-    /**
-     * Utility function to write the date graph data as a Excel workbook; required since PowerPoint charts actually
-     *   embed an Excel file with corresponding data. If invalid, it'll open in OpenOffice fine, but PowerPoint will
-     *   complain that the presentation is corrupted.
-     * @param data the date graph data.
-     * @return a new Excel workbook with specified data on a new sheet.
-     */
-    private static XSSFWorkbook writeChart(final DategraphData data) {
-        final XSSFWorkbook wb = new XSSFWorkbook();
-        final XSSFSheet sheet = wb.createSheet("Sheet1");
-
-        final CellStyle cellStyle = wb.createCellStyle();
-        cellStyle.setDataFormat((short) 14);
-
-        final List<DategraphData.Row> rows = data.getRows();
-        final long[] timestamps = data.getTimestamps();
-
-        final XSSFRow header = sheet.createRow(0);
-        header.createCell(0).setCellValue("Timestamp");
-        for (int ii = 0; ii < rows.size(); ++ii) {
-            header.createCell(ii + 1).setCellValue(rows.get(ii).getLabel());
-        }
-
-        for (int rowIdx = 0; rowIdx < timestamps.length; ++rowIdx) {
-            final XSSFRow row = sheet.createRow(rowIdx + 1);
-
-            final XSSFCell cell = row.createCell(0);
-            cell.setCellStyle(cellStyle);
-            cell.setCellValue(new Date(timestamps[rowIdx] * 1000));
-
-            for (int ii = 0; ii < rows.size(); ++ii) {
-                row.createCell(ii + 1).setCellValue(rows.get(ii).getValues()[rowIdx]);
-            }
-        }
-
-        return wb;
-    }
-
-    @Override
-    public XMLSlideShow report(final ReportData report, final boolean slidePerVisualizer) throws TemplateLoadException {
-        final SlideShowTemplate template = loadTemplate();
-        final XMLSlideShow ppt = template.getSlideShow();
-
-        final Rectangle2D.Double pageAnchor = createPageAnchor(ppt);
-        double width = pageAnchor.getWidth();
-        double height = pageAnchor.getHeight();
-
-        if (!slidePerVisualizer) {
-            // If drawing multiple visualizations on a single slide, we need to render the charts first since adding
-            //   chart objects directly via XML after calling slide.getShapes() or createShape() etc. will break things.
-            Arrays.sort(report.getChildren(), Comparator.comparingInt(PowerPointServiceImpl::prioritizeCharts));
-        }
-
-        // As above, we need to have a separate slide to place our sizing textbox for calculations.
-        XSLFSlide sizingSlide = ppt.createSlide();
-        // This is the slide to draw on.
-        XSLFSlide slide = ppt.createSlide();
-
-        int shapeId = 1;
-        boolean first = true;
-
-        for(final ReportData.Child child : report.getChildren()) {
-            if (slidePerVisualizer && !first) {
-                sizingSlide = ppt.createSlide();
-                slide = ppt.createSlide();
-            }
-
-            first = false;
-
-            final ComposableElement data = child.getData();
-            final Rectangle2D.Double anchor = new Rectangle2D.Double(
-                    pageAnchor.getMinX() + width * child.getX(),
-                    pageAnchor.getMinY() + height * child.getY(),
-                    width * child.getWidth(),
-                    height * child.getHeight());
-
-            if (child.getMargin() >= 0) {
-                final double margin = child.getMargin();
-                final double marginX2 = margin * 2;
-                final double textMargin = child.getTextMargin();
-
-                if (anchor.getWidth() > marginX2) {
-                    double xCursor = anchor.getMinX() + margin,
-                           xWidthAvail = anchor.getWidth() - marginX2,
-                           yCursor = anchor.getMinY() + margin,
-                           yHeightAvail = anchor.getHeight() - marginX2;
-                    XSLFTextBox sizingBox = null;
-
-                    final String title = child.getTitle();
-                    if (StringUtils.isNotEmpty(title) && yHeightAvail > 0) {
-                        sizingBox = sizingSlide.createTextBox();
-                        final Rectangle2D.Double sizingAnchor = new Rectangle2D.Double(
-                                xCursor,
-                                yCursor,
-                                xWidthAvail,
-                                yHeightAvail);
-                        sizingBox.setAnchor(sizingAnchor);
-                        sizingBox.clearText();
-                        addTextRun(sizingBox.addNewTextParagraph(), title, child.getFontSize(), Color.BLACK).setFontFamily(child.getFontFamily());
-
-                        final double textHeight = sizingBox.getTextHeight() + textMargin;
-                        yCursor += textHeight;
-                        yHeightAvail -= textHeight;
-                    }
-
-                    if (yHeightAvail > 0) {
-                        anchor.setRect(xCursor, yCursor, xWidthAvail, yHeightAvail);
-                    }
-                    else if (sizingBox != null) {
-                        sizingSlide.removeShape(sizingBox);
-                    }
-                }
-            }
-
-            if (data instanceof DategraphData) {
-                addDategraph(template, slide, anchor, (DategraphData) data, shapeId, "relId" + shapeId);
-                shapeId++;
-            }
-            else if (data instanceof ListData) {
-                final ListData listData = (ListData) data;
-                addList(imageSource, ppt, slide, anchor, false, listData, null, null);
-            }
-            else if (data instanceof MapData) {
-                final MapData mapData = (MapData) data;
-                addMap(slide, anchor, addPictureData(imageSource, ppt, mapData.getImage()), mapData.getMarkers());
-            }
-            else if (data instanceof SunburstData) {
-                addSunburst(template, slide, anchor, (SunburstData) data, shapeId, "relId" + shapeId);
-                shapeId++;
-            }
-            else if (data instanceof TableData) {
-                final TableData tableData = (TableData) data;
-                addTable(slide, anchor, tableData.getRows(), tableData.getCols(), tableData.getCells(), true);
-            }
-            else if (data instanceof TopicMapData) {
-                addTopicMap(slide, anchor, (TopicMapData) data);
-            }
-            else if (data instanceof TextData) {
-                addTextData(slide, anchor, (TextData) data);
-            }else if ( data instanceof BarData ) {
-            	addBarChart(template, slide, anchor, (BarData) data, shapeId, "relId" + shapeId);
-            	shapeId++;
-            }else if (data instanceof PieChartData) {
-            	addPieChart(template, slide, anchor, (PieChartData) data, shapeId, "relId" + shapeId);
-            	shapeId++;
-            }
-
-            if (slidePerVisualizer) {
-                transferSizedTextboxes(ppt, slide, sizingSlide);
-            }
-        }
-
-        if (!slidePerVisualizer) {
-            transferSizedTextboxes(ppt, slide, sizingSlide);
-        }
-
-        return ppt;
-    }
-
-    private static void transferSizedTextboxes(final XMLSlideShow ppt, final XSLFSlide slide, final XSLFSlide sizingSlide) {
-        // Clone all text boxes to the original slide afterward, and remove the sizing slide
-        for(XSLFShape shape : sizingSlide.getShapes()) {
-            if (shape instanceof XSLFTextBox) {
-                final XSLFTextBox src = (XSLFTextBox) shape;
-                final XSLFTextBox textBox = slide.createTextBox();
-                textBox.setAnchor(src.getAnchor());
-                textBox.clearText();
-                src.forEach(srcPara -> textBox.addNewTextParagraph().getXmlObject().set(srcPara.getXmlObject().copy()));
-            }
-        }
-
-        ppt.removeSlide(ppt.getSlides().indexOf(sizingSlide));
-    }
-
-    /**
-     * Utility function to render a TextData object as multiple text runs on the screen in a single text paragraph.
-     * Note that newlines are not added automatically; this is so we can support adjacent text with different formatting.
-     * @param slide the slide to add to.
-     * @param anchor bounding rectangle to draw onto, in PowerPoint coordinates.
-     * @param data the text data to render.
-     */
-    private void addTextData(final XSLFSlide slide, final Rectangle2D.Double anchor, final TextData data) {
-        final XSLFTextBox textBox = slide.createTextBox();
-        textBox.setAnchor(anchor);
-        textBox.clearText();
-
-        final XSLFTextParagraph para = textBox.addNewTextParagraph();
-
-        for(final TextData.Paragraph runData : data.getText()) {
-            final XSLFTextRun run = para.addNewTextRun();
-            run.setText(runData.getText());
-            run.setFontSize(runData.getFontSize());
-            run.setBold(runData.isBold());
-            run.setItalic(runData.isItalic());
-            run.setFontColor(Color.decode(runData.getColor()));
-
-            if (textBox.getTextHeight() > anchor.getHeight()) {
-                // Try removing words from the last box until we find something that fits, or we run out of words
-                final String trimmedText = runData.getText().trim();
-                run.setText(trimmedText);
-
-                for (final StringBuilder text = new StringBuilder(trimmedText); textBox.getTextHeight() > anchor.getHeight() && text.length() > 0 ; ) {
-                    final int lastSpaceIdx = Math.max(text.lastIndexOf(" "), text.lastIndexOf("\n"));
-
-                    if (lastSpaceIdx < 0) {
-                        break;
-                    }
-
-                    text.delete(lastSpaceIdx, text.length());
-                    // Add a trailing ellipsis unless it's empty or already contained a trailing ellipsis or "..." at the final truncated position.
-                    run.setText(text.length() > 0 ? text.toString().replaceFirst("(\\s*(\\.{3}|\u2026))?$", "\u2026") : "");
-                }
-
-                // The font metrics aren't going to be perfect (due to unavailability of fonts etc.) so we force the truncated text to fit.
-                textBox.setTextAutofit(TextShape.TextAutofit.NORMAL);
-
-                break;
-            }
-        }
-    }
-
-    /**
-     * Utility function to define a sort order which places date graph and sunburst to the front, since they have to
-     *   be added to the XML before any other shapes are drawn on the slide.
-     * @param child the child to test.
-     * @return -1 for date graphs/sunbursts, 0 otherwise.
-     */
-    private static int prioritizeCharts(final ReportData.Child child) {
-        final ComposableElement d = child.getData();
-        return d instanceof DategraphData || d instanceof SunburstData ? -1 : 0;
-    }
-
-    /**
-     * Utility function to generate a new unique package part name within a PowerPoint zip file, given a base name
-     *   which has a number before the file extension.
-     * @param opcPackage the PowerPoint zip package.
-     * @param baseName the original name.
-     * @return a new unique package part name with an incremented number if the old name had a number before the file extension,
-     *         or the old name otherwise.
-     * @throws InvalidFormatException if there was an exception while generating the new name.
-     */
-    private static PackagePartName generateNewName(final OPCPackage opcPackage, final String baseName) throws InvalidFormatException {
-        final Pattern pattern = Pattern.compile("(.*?)(\\d+)(\\.\\w+)?$");
-
-        final Matcher matcher = pattern.matcher(baseName);
-
-        if (matcher.find()) {
-            int num = Integer.parseInt(matcher.group(2));
-
-            for (int ii = num + 1; ii < Integer.MAX_VALUE; ++ii) {
-                final PackagePartName testName = PackagingURIHelper.createPartName(matcher.group(1) + ii + matcher.group(3));
-
-                if (opcPackage.getPart(testName) == null) {
-                    return testName;
-                }
-            }
-        }
-
-        // If the document doesn't have a numeric extension, just return it
-        return PackagingURIHelper.createPartName(baseName);
-    }
-
-    /**
-     * Utility function to write a chart object to a slide based on a template.
-     * Creates new copies of referred objects in the chart, e.g. colors1.xml and style1.xml, and writes the Excel
-     *   workbook data to new files in the PowerPoint .zip structure.
-     * @param pptx the presentation to add to.
-     * @param slide the slide to add to.
-     * @param templateChart the original template chart XML reference object from the template.
-     * @param modifiedChart the new chart XML object.
-     * @param workbook the Excel workbook data corresponding to the chart XML data.
-     * @param relId the relation id for the new chart.
-     * @throws IOException if there's IO errors working with the chart.
-     * @throws InvalidFormatException if there's errors generating new package part names for the new copies of the data.
-     */
-    private static void writeChart(final XMLSlideShow pptx, final XSLFSlide slide, 
-    		final XSLFChart templateChart, final CTChartSpace modifiedChart,
-    		final XSSFWorkbook workbook, final String relId) throws IOException, InvalidFormatException {
-    	
-        final OPCPackage opcPackage = pptx.getPackage();
-        
-        //this is the package part name for the new chart - should return /ppt/charts/chart1.xml
-        final PackagePartName chartName = generateNewName(opcPackage,  templateChart.getPackagePart().getPartName().getURI().getPath());
-        
-        logger.info("chartName is "+chartName);
-        
-
-        //write the complete chart xml inside c:chartSpace so that this can be saved
-        final ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        XmlOptions xmlOptions = new XmlOptions(DEFAULT_XML_OPTIONS);
-        xmlOptions.setSaveSyntheticDocumentElement(new QName(CTChartSpace.type.getName().getNamespaceURI(), "chartSpace", "c"));
-        modifiedChart.save(baos, xmlOptions);
-        
-        final PackagePart chartPart = opcPackage.createPart(chartName, XSLFRelation.CHART.getContentType(), baos);
-
-        //add the relation between this chart part and the slide
-        slide.getPackagePart().addRelationship(chartName, TargetMode.INTERNAL, XSLFRelation.CHART.getRelation(), relId);
-
-        //loop through all parts of the chart from template 
-        //if there is an excel part associated (found  by contenttype)
-        //then copy the workbook data (data which was used to generate the modified chart) to partCopy
-        //otherwise if its a different part(not a workbook), then just copy it as it is from corresponding part of the template chart
-        for(final POIXMLDocumentPart.RelationPart part : templateChart.getRelationParts()) {
-        	
-            final ByteArrayOutputStream partCopy = new ByteArrayOutputStream();
-            final URI targetURI = part.getRelationship().getTargetURI();
-
-            final String contentType = part.getDocumentPart().getPackagePart().getContentType();
-
-            PackagePartName name ;
-            
-            if("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet".equals(contentType)) {
-                workbook.write(partCopy);
-                name = generateNewName(opcPackage, targetURI.getPath());
-                
-                opcPackage.createPart(name, contentType, partCopy);   //breaking here
-                chartPart.addRelationship(name, TargetMode.INTERNAL, part.getRelationship().getRelationshipType());
-            }
-            else {
-                IOUtils.copy(part.getDocumentPart().getPackagePart().getInputStream(), partCopy);
-                name = generateNewName(opcPackage, targetURI.getPath());
-                
-                opcPackage.createPart(name, contentType, partCopy);   
-                chartPart.addRelationship(name, TargetMode.INTERNAL, part.getRelationship().getRelationshipType());
-            }
-            
-            
-            logger.info("part name "+name); 
-            
-
-        }
-        
-        
-    }
-
-	
+
+	}
+
+	/**
+	 * Internal implementation to add a sunburst chart (actually a doughnut chart)
+	 * to a slide, based on a template.
+	 * 
+	 * @param template
+	 *            the parsed template information.
+	 * @param slide
+	 *            the slide to add to.
+	 * @param anchor
+	 *            optional bounding rectangle to draw onto, in PowerPoint
+	 *            coordinates. If null, we'll use the bounds from the original
+	 *            template chart.
+	 * @param data
+	 *            the sunburst data.
+	 * @param shapeId
+	 *            the slide shape ID, should be unique within the slide.
+	 * @param relId
+	 *            the relation ID to the chart data.
+	 * @throws TemplateLoadException
+	 *             if we can't create the sunburst; most likely due to an invalid
+	 *             template.
+	 */
+	private static void addSunburst(final SlideShowTemplate template, final XSLFSlide slide,
+			final Rectangle2D.Double anchor, final SunburstData data, final int shapeId, final String relId)
+			throws TemplateLoadException {
+
+		/* unwrap the data passed which should be used to populate our chart */
+		final String[] categories = data.getCategories();
+		final double[] values = data.getValues();
+		final String title = data.getTitle();
+
+		/* add a new graphic Frame */
+		slide.getXmlObject().getCSld().getSpTree().addNewGraphicFrame()
+				.set(template.getDoughnutChartShapeXML(relId, shapeId, "chart" + shapeId, anchor));
+
+		/* Sheet created */
+		final XSSFWorkbook workbook = new XSSFWorkbook();
+		final XSSFSheet sheet = workbook.createSheet();
+
+		/* get base chart from template */
+		final XSLFChart baseChart = template.getDoughnutChart();
+
+		/* we now created a copy of the chart openxml object */
+		final CTChartSpace chartSpace = (CTChartSpace) baseChart.getCTChartSpace().copy();
+		final CTChart ctChart = chartSpace.getChart();
+		final CTPlotArea plotArea = ctChart.getPlotArea();
+
+		if (StringUtils.isEmpty(title)) {
+			if (ctChart.getAutoTitleDeleted() != null) {
+				ctChart.getAutoTitleDeleted().setVal(true);
+			}
+
+			ctChart.unsetTitle();
+		}
+
+		final CTDoughnutChart donutChart = plotArea.getDoughnutChartArray(0);
+
+		final CTPieSer series = donutChart.getSerArray(0);
+
+		final CTStrRef strRef = series.getTx().getStrRef();
+		strRef.getStrCache().getPtArray(0).setV(title);
+		sheet.createRow(0).createCell(1).setCellValue(title);
+		strRef.setF(new CellReference(sheet.getSheetName(), 0, 1, true, true).formatAsString());
+
+		final CTStrRef categoryRef = series.getCat().getStrRef();
+		final CTStrData categoryData = categoryRef.getStrCache();
+		final CTNumRef numRef = series.getVal().getNumRef();
+		final CTNumData numericData = numRef.getNumCache();
+
+		final String[] fillColors = data.getColors();
+		final String[] strokeColors = data.getStrokeColors();
+		final boolean overrideFill = ArrayUtils.isNotEmpty(fillColors);
+		final boolean overrideStroke = ArrayUtils.isNotEmpty(strokeColors);
+		final boolean overrideColors = overrideFill || overrideStroke;
+		final List<CTDPt> dPtList = series.getDPtList();
+		final CTDPt templatePt = (CTDPt) dPtList.get(0).copy();
+		if (overrideColors) {
+			dPtList.clear();
+
+			final CTShapeProperties spPr = templatePt.getSpPr();
+			final CTLineProperties ln = spPr.getLn();
+
+			// We need to unset any styles on the existing template
+			if (overrideFill) {
+				unsetSpPrFills(spPr);
+			}
+
+			if (overrideStroke) {
+				unsetLineFills(ln);
+			}
+		}
+
+		categoryData.setPtArray(null);
+		numericData.setPtArray(null);
+
+		CTLegend legend = null;
+		final int[] showInLegend = data.getShowInLegend();
+		int nextLegendToShow = 0, nextLegendToShowIdx = -1;
+		if (showInLegend != null) {
+			// We need to write legendEntry elements to hide the legend for chart series we
+			// don't want.
+			// Note this only works in PowerPoint, and not OpenOffice.
+			legend = ctChart.isSetLegend() ? ctChart.getLegend() : ctChart.addNewLegend();
+			Arrays.sort(showInLegend);
+			nextLegendToShow = showInLegend[++nextLegendToShowIdx];
+		}
+
+		for (int idx = 0; idx < values.length; ++idx) {
+			final CTStrVal categoryPoint = categoryData.addNewPt();
+			categoryPoint.setIdx(idx);
+			categoryPoint.setV(categories[idx]);
+
+			final CTNumVal numericPoint = numericData.addNewPt();
+			numericPoint.setIdx(idx);
+			numericPoint.setV(Double.toString(values[idx]));
+
+			if (overrideColors) {
+				final CTDPt copiedPt = (CTDPt) templatePt.copy();
+				copiedPt.getIdx().setVal(idx);
+
+				if (overrideFill) {
+					final Color color = Color.decode(fillColors[idx % fillColors.length]);
+					final CTSolidColorFillProperties fillClr = copiedPt.getSpPr().addNewSolidFill();
+					fillClr.addNewSrgbClr().setVal(
+							new byte[] { (byte) color.getRed(), (byte) color.getGreen(), (byte) color.getBlue() });
+				}
+
+				if (overrideStroke) {
+					final Color strokeColor = Color.decode(strokeColors[idx % strokeColors.length]);
+					final CTSolidColorFillProperties strokeClr = copiedPt.getSpPr().getLn().addNewSolidFill();
+					strokeClr.addNewSrgbClr().setVal(new byte[] { (byte) strokeColor.getRed(),
+							(byte) strokeColor.getGreen(), (byte) strokeColor.getBlue() });
+				}
+
+				dPtList.add(copiedPt);
+			}
+
+			if (legend != null) {
+				// We're hiding some legend elements. Should we show this index?
+				if (nextLegendToShow == idx) {
+					// We show this index, find the next one to show.
+					++nextLegendToShowIdx;
+					if (nextLegendToShowIdx < showInLegend.length) {
+						nextLegendToShow = showInLegend[nextLegendToShowIdx];
+					}
+				} else {
+					// We hide this index. If there's already a matching legend entry in the XML,
+					// update it,
+					// otherwise we create a new legend entry.
+					boolean found = false;
+					for (int ii = 0, max = legend.sizeOfLegendEntryArray(); ii < max; ++ii) {
+						final CTLegendEntry legendEntry = legend.getLegendEntryArray(ii);
+						final CTUnsignedInt idxLegend = legendEntry.getIdx();
+						if (idxLegend != null && idxLegend.getVal() == idx) {
+							found = true;
+							if (legendEntry.isSetDelete()) {
+								legendEntry.getDelete().setVal(true);
+							} else {
+								legendEntry.addNewDelete().setVal(true);
+							}
+						}
+					}
+
+					if (!found) {
+						final CTLegendEntry idxLegend = legend.addNewLegendEntry();
+						idxLegend.addNewIdx().setVal(idx);
+						idxLegend.addNewDelete().setVal(true);
+					}
+				}
+			}
+
+			XSSFRow row = sheet.createRow(idx + 1);
+			row.createCell(0).setCellValue(categories[idx]);
+			row.createCell(1).setCellValue(values[idx]);
+		}
+		// loop ends
+
+		categoryData.getPtCount().setVal(categories.length);
+		numericData.getPtCount().setVal(values.length);
+
+		categoryRef.setF(new CellRangeAddress(1, values.length, 0, 0).formatAsString(sheet.getSheetName(), true));
+		numRef.setF(new CellRangeAddress(1, values.length, 1, 1).formatAsString(sheet.getSheetName(), true));
+
+		try {
+			writeChart(template.getSlideShow(), slide, baseChart, chartSpace, workbook, relId);
+		} catch (IOException | InvalidFormatException e) {
+			throw new TemplateLoadException("Error writing chart in loaded template", e);
+		}
+	}
+
+	private static void unsetLineFills(final CTLineProperties ln) {
+		if (ln.isSetSolidFill()) {
+			ln.unsetSolidFill();
+		}
+		if (ln.isSetPattFill()) {
+			ln.unsetPattFill();
+		}
+		if (ln.isSetGradFill()) {
+			ln.unsetGradFill();
+		}
+		if (ln.isSetNoFill()) {
+			ln.unsetNoFill();
+		}
+	}
+
+	private static void unsetSpPrFills(final CTShapeProperties spPr) {
+		if (spPr.isSetBlipFill()) {
+			spPr.unsetBlipFill();
+		}
+		if (spPr.isSetGradFill()) {
+			spPr.unsetGradFill();
+		}
+		if (spPr.isSetGrpFill()) {
+			spPr.unsetGrpFill();
+		}
+		if (spPr.isSetNoFill()) {
+			spPr.unsetNoFill();
+		}
+		if (spPr.isSetSolidFill()) {
+			spPr.unsetSolidFill();
+		}
+		if (spPr.isSetPattFill()) {
+			spPr.unsetPattFill();
+		}
+	}
+
+	@Override
+	public XMLSlideShow table(final TableData tableData, final String title) throws TemplateLoadException {
+		final int rows = tableData.getRows(), cols = tableData.getCols();
+		final String[] data = tableData.getCells();
+
+		final XMLSlideShow ppt = loadTemplate().getSlideShow();
+		final XSLFSlide sl = ppt.createSlide();
+
+		final Rectangle2D.Double pageAnchor = createPageAnchor(ppt);
+
+		final double textHeight;
+
+		if (StringUtils.isNotBlank(title)) {
+			textHeight = 0.1 * pageAnchor.getHeight();
+			final XSLFTextBox textBox = sl.createTextBox();
+			textBox.setText(title);
+			textBox.setHorizontalCentered(true);
+			textBox.setTextAutofit(TextShape.TextAutofit.SHAPE);
+			textBox.setAnchor(startingSpace(pageAnchor, textHeight));
+		} else {
+			textHeight = 0;
+		}
+
+		addTable(sl, remainingSpace(pageAnchor, textHeight), rows, cols, data, false);
+
+		return ppt;
+	}
+
+	/**
+	 * Utility function to compute bounds for a shape in PowerPoint coordinates,
+	 * given the bounds of the original free space available and a measure of the
+	 * shape's height.
+	 * 
+	 * @param pageAnchor
+	 *            the available bounds in PowerPoint coordinates.
+	 * @param space
+	 *            the height of the shape.
+	 * @return the bounds for the shape.
+	 */
+	private static Rectangle2D.Double startingSpace(final Rectangle2D.Double pageAnchor, final double space) {
+		return new Rectangle2D.Double(pageAnchor.getMinX(), pageAnchor.getMinY(), pageAnchor.getWidth(), space);
+	}
+
+	/**
+	 * Utility function to compute the bounds for the remaining space, given the
+	 * bounds of the original free space available and the amount of vertical height
+	 * already taken.
+	 * 
+	 * @param pageAnchor
+	 *            the available bounds in PowerPoint coordinates.
+	 * @param usedSpace
+	 *            how much height is already taken.
+	 * @return the bounds for the remaining space under the used space.
+	 */
+	private static Rectangle2D.Double remainingSpace(final Rectangle2D.Double pageAnchor, final double usedSpace) {
+		return new Rectangle2D.Double(pageAnchor.getMinX(), pageAnchor.getMinY() + usedSpace, pageAnchor.getWidth(),
+				Math.max(1, pageAnchor.getHeight() - usedSpace));
+	}
+
+	/**
+	 * Internal implementation to add a table to a slide.
+	 * 
+	 * @param slide
+	 *            the slide to add to.
+	 * @param anchor
+	 *            bounding rectangle to draw onto, in PowerPoint coordinates.
+	 * @param rows
+	 *            number of rows.
+	 * @param cols
+	 *            number of columns.
+	 * @param data
+	 *            the data for each cell, laid out row-by-row.
+	 * @param crop
+	 *            whether we should try and crop the table to the bounding rectangle
+	 *            by removing extra rows. This doesn't guarantee an exact match,
+	 *            since the font metrics may not exactly match.
+	 */
+	private static void addTable(final XSLFSlide slide, final Rectangle2D.Double anchor, final int rows, final int cols,
+			final String[] data, final boolean crop) {
+		final XSLFTable table = slide.createTable(rows, cols);
+
+		int idx = 0;
+
+		double availWidth = anchor.getWidth();
+		double tableW = 0;
+
+		if (cols == 2) {
+			// In the most common situation, there's a count column which should be
+			// relatively smaller.
+			// Make it take 10%, or 70 pixels, whichever is bigger, unless that's more than
+			// 50% of the overall space.
+			final double minCountWidth = 70;
+			final double countColWidth = Math.min(0.5 * availWidth, Math.max(minCountWidth, availWidth * 0.1));
+			table.setColumnWidth(0, availWidth - countColWidth);
+			table.setColumnWidth(1, countColWidth);
+			tableW += table.getColumnWidth(0);
+			tableW += table.getColumnWidth(1);
+		} else {
+			for (int col = 0; col < cols; ++col) {
+				table.setColumnWidth(col, availWidth / cols);
+				tableW += table.getColumnWidth(col);
+			}
+		}
+
+		// PowerPoint won't auto-shrink the table for you; and the POI API can't
+		// calculate the heights, so we just
+		// have to assume the total row heights add up to be the table height.
+		double tableH = 0;
+
+		for (int row = 0; row < rows; ++row) {
+			for (int col = 0; col < cols; ++col) {
+				final XSLFTableCell cell = table.getCell(row, col);
+				cell.setText(data[idx++]);
+
+				for (final TableCell.BorderEdge edge : TableCell.BorderEdge.values()) {
+					cell.setBorderColor(edge, Color.BLACK);
+				}
+			}
+
+			final double nextH = tableH + table.getRowHeight(row);
+
+			if (crop && nextH > anchor.getHeight() && row < rows - 1) {
+				// If it doesn't fit, merge all the final row cells together and label them with
+				// an ellipsis.
+				table.mergeCells(row, row, 0, cols - 1);
+				table.getCell(row, 0).setText("\u2026");
+				break;
+			} else {
+				tableH = nextH;
+			}
+
+		}
+
+		final double width = Math.min(tableW, availWidth);
+
+		table.setAnchor(new Rectangle2D.Double(anchor.getMinX() + 0.5 * (availWidth - width), anchor.getMinY(), width,
+				Math.min(tableH, anchor.getHeight())));
+
+	}
+
+	@Override
+	public XMLSlideShow map(final MapData map, final String title) throws TemplateLoadException {
+		final String image = map.getImage();
+
+		final XMLSlideShow ppt = loadTemplate().getSlideShow();
+		final XSLFSlide sl = ppt.createSlide();
+
+		final Rectangle2D.Double pageAnchor = createPageAnchor(ppt);
+		final double textHeight;
+
+		if (StringUtils.isNotBlank(title)) {
+			textHeight = 0.1 * pageAnchor.getHeight();
+
+			final XSLFTextBox textBox = sl.createTextBox();
+			textBox.clearText();
+			final XSLFTextParagraph paragraph = textBox.addNewTextParagraph();
+			paragraph.setTextAlign(TextParagraph.TextAlign.CENTER);
+			paragraph.addNewTextRun().setText(title);
+			textBox.setHorizontalCentered(true);
+			textBox.setTextAutofit(TextShape.TextAutofit.SHAPE);
+			textBox.setAnchor(startingSpace(pageAnchor, textHeight));
+		} else {
+			textHeight = 0;
+		}
+
+		final XSLFPictureData picture = addPictureData(imageSource, ppt, image);
+		addMap(sl, remainingSpace(pageAnchor, textHeight), picture, map.getMarkers());
+
+		return ppt;
+	}
+
+	/**
+	 * Utility function to add image data to a PowerPoint presentation.
+	 * 
+	 * @param imageSource
+	 *            the image source.
+	 * @param ppt
+	 *            the presentation to add to.
+	 * @param imageId
+	 *            the image identifier, typically a URI.
+	 * @return the picture data.
+	 */
+	private static XSLFPictureData addPictureData(final ImageSource imageSource, final XMLSlideShow ppt,
+			final String imageId) {
+		final ImageData imageData = imageSource.getImageData(imageId);
+		return ppt.addPicture(imageData.getData(), imageData.getType());
+	}
+
+	/**
+	 * Internal implementation to add an image (a world map, though other image data
+	 * is also fine) to a slide. Preserves the original image's aspect ratio,
+	 * leaving blank space below and to the sides of the image.
+	 * 
+	 * @param slide
+	 *            the slide to add to.
+	 * @param anchor
+	 *            bounding rectangle to draw onto, in PowerPoint coordinates.
+	 * @param picture
+	 *            the picture data.
+	 * @param markers
+	 *            an array of markers to draw over the map.
+	 * @return the picture shape object added to the slide.
+	 */
+	private static XSLFPictureShape addMap(final XSLFSlide slide, final Rectangle2D.Double anchor,
+			final XSLFPictureData picture, final Marker[] markers) {
+		double tgtW = anchor.getWidth(), tgtH = anchor.getHeight();
+
+		final Dimension size = picture.getImageDimension();
+		final double ratio = size.getWidth() / size.getHeight();
+
+		if (ratio > tgtW / tgtH) {
+			// source image is wider than target, clip fixed width variable height
+			tgtH = tgtW / ratio;
+		} else {
+			tgtW = tgtH * ratio;
+		}
+
+		final XSLFPictureShape canvas = slide.createPicture(picture);
+		// Vertically align top, horizontally-align center
+		final double offsetX = anchor.getMinX() + 0.5 * (anchor.getWidth() - tgtW), offsetY = anchor.getMinY();
+		canvas.setAnchor(new Rectangle2D.Double(offsetX, offsetY, tgtW, tgtH));
+
+		for (Marker marker : markers) {
+			final Color color = Color.decode(marker.getColor());
+			final double centerX = offsetX + marker.getX() * tgtW;
+			final double centerY = offsetY + marker.getY() * tgtH;
+
+			if (marker.isCluster()) {
+				final XSLFGroupShape group = slide.createGroup();
+				double halfMark = 10;
+				double mark = halfMark * 2;
+				double innerHalfMark = 7;
+				double innerMark = innerHalfMark * 2;
+				// align these so the middle is the latlng position
+				final Rectangle2D.Double groupAnchor = new Rectangle2D.Double(centerX - halfMark, centerY - halfMark,
+						mark, mark);
+
+				group.setAnchor(groupAnchor);
+				group.setInteriorAnchor(groupAnchor);
+
+				final XSLFAutoShape shape = group.createAutoShape();
+				shape.setShapeType(ShapeType.ELLIPSE);
+				final boolean fade = marker.isFade();
+				// There's a 0.3 alpha transparency (255 * 0.3 is 76) when a marker is faded out
+				final int FADE_ALPHA = 76;
+				shape.setFillColor(transparentColor(color, fade ? 47 : 154));
+				shape.setAnchor(groupAnchor);
+
+				final XSLFAutoShape inner = group.createAutoShape();
+				inner.setFillColor(fade ? transparentColor(color, FADE_ALPHA) : color);
+				inner.setLineWidth(0.1);
+				inner.setLineColor(new Color((int) (color.getRed() * 0.9), (int) (color.getGreen() * 0.9),
+						(int) (color.getBlue() * 0.9), fade ? FADE_ALPHA : 255));
+				inner.setShapeType(ShapeType.ELLIPSE);
+				inner.setHorizontalCentered(true);
+				inner.setWordWrap(false);
+				inner.setVerticalAlignment(VerticalAlignment.MIDDLE);
+				inner.clearText();
+				final XSLFTextParagraph para = inner.addNewTextParagraph();
+				para.setTextAlign(TextParagraph.TextAlign.CENTER);
+				final XSLFTextRun text = para.addNewTextRun();
+				text.setFontSize(6.0);
+				final Color fontColor = Color.decode(StringUtils.defaultString(marker.getFontColor(), "#000000"));
+				text.setFontColor(fade ? transparentColor(fontColor, FADE_ALPHA) : fontColor);
+				text.setText(marker.getText());
+				inner.setAnchor(
+						new Rectangle2D.Double(centerX - innerHalfMark, centerY - innerHalfMark, innerMark, innerMark));
+			} else {
+				final XSLFGroupShape group = slide.createGroup();
+
+				final XSLFFreeformShape shape = group.createFreeform();
+				shape.setHorizontalCentered(true);
+				shape.setWordWrap(false);
+
+				shape.setVerticalAlignment(VerticalAlignment.BOTTOM);
+				shape.setLineWidth(0.5);
+				shape.setLineColor(color.darker());
+				shape.setFillColor(transparentColor(color, 210));
+
+				final double halfMark = 8, mark = halfMark * 2, extension = 0.85,
+						markerHeight = (0.5 + extension) * mark, angle = Math.asin(0.5 / extension) * 180 / Math.PI;
+
+				// Set group position
+				group.setAnchor(new Rectangle2D.Double(centerX - halfMark, centerY - markerHeight, mark, markerHeight));
+				group.setInteriorAnchor(new Rectangle2D.Double(0, 0, mark, markerHeight));
+
+				// Draw a semicircle and a triangle to represent the marker, pointing at the
+				// precise x,y location
+				final Path2D.Double path = new Path2D.Double();
+				path.moveTo(halfMark, markerHeight);
+				path.append(new Arc2D.Double(0, 0, mark, mark, -angle, 180 + angle + angle, Arc2D.OPEN), true);
+				path.lineTo(halfMark, markerHeight);
+				shape.setPath(path);
+				shape.setAnchor(new Rectangle2D.Double(0, 0, mark, markerHeight));
+
+				final XSLFAutoShape disc = group.createAutoShape();
+				disc.setShapeType(ShapeType.DONUT);
+				final double discRadius = 0.25 * mark;
+				final double discDiameter = 2 * discRadius;
+				disc.setAnchor(new Rectangle2D.Double(halfMark - discRadius, halfMark - discRadius, discDiameter,
+						discDiameter));
+				disc.setFillColor(Color.WHITE);
+				disc.setLineColor(Color.WHITE);
+
+				if (StringUtils.isNotEmpty(marker.getText())) {
+					final PackageRelationship rel = shape.getSheet().getPackagePart().addRelationship(
+							slide.getPackagePart().getPartName(), TargetMode.INTERNAL,
+							XSLFRelation.SLIDE.getRelation());
+					// We create a hyperlink which links back to this slide; so we get
+					// hover-over-detail-text on the marker
+					// Annoyingly, you can't put a link on the group, just on the individual shapes.
+					for (XSLFShape clickable : group.getShapes()) {
+						final CTHyperlink link = ((CTShape) clickable.getXmlObject()).getNvSpPr().getCNvPr()
+								.addNewHlinkClick();
+						link.setTooltip(marker.getText());
+						link.setId(rel.getId());
+						link.setAction("ppaction://hlinksldjump");
+					}
+				}
+			}
+		}
+
+		return canvas;
+	}
+
+	/**
+	 * Utility function to create a semi-transparent variant of a given colour.
+	 * 
+	 * @param color
+	 *            the original colour.
+	 * @param a
+	 *            alpha, as a value from 0 (transparent) to 255 (opaque).
+	 * @return colour with transparency set.
+	 */
+	private static Color transparentColor(final Color color, final int a) {
+		return new Color(color.getRed(), color.getGreen(), color.getBlue(), a);
+	}
+
+	@Override
+	public XMLSlideShow list(final ListData documentList, final String results, final String sortBy)
+			throws TemplateLoadException {
+		final XMLSlideShow ppt = loadTemplate().getSlideShow();
+
+		addList(imageSource, ppt, null, createPageAnchor(ppt), true, documentList, results, sortBy);
+
+		return ppt;
+	}
+
+	/**
+	 * Internal implementation to add a list of documents to a presentation; either
+	 * as a single slide or a series of slides.
+	 * 
+	 * @param imageSource
+	 *            the image source to convert images to data.
+	 * @param ppt
+	 *            the presentation to add to.
+	 * @param sl
+	 *            the slide to add to (can be null if pagination is enabled).
+	 * @param anchor
+	 *            bounding rectangle to draw onto, in PowerPoint coordinates.
+	 * @param paginate
+	 *            whether to render results as multiple slides if they don't fit on
+	 *            one slide.
+	 * @param data
+	 *            the documents to render.
+	 * @param results
+	 *            optional string to render into the top-left corner of the
+	 *            available space. Will appear on each page if pagination is
+	 *            enabled.
+	 * @param sortBy
+	 *            optional string to render into the top-right corner of the
+	 *            available space. Will appear on each page if pagination is
+	 *            enabled.
+	 */
+	private static void addList(final ImageSource imageSource, final XMLSlideShow ppt, XSLFSlide sl,
+			final Rectangle2D.Double anchor, final boolean paginate, final ListData data, final String results,
+			final String sortBy) {
+		final double
+		// How much space to leave at the left and right edge of the slide
+		xMargin = 20,
+				// How much space to leave at the top
+				yMargin = 5,
+				// Size of the icon
+				iconWidth = 20, iconHeight = 24,
+				// Find's thumbnail height is 97px by 55px, hardcoded in the CSS in
+				// .document-thumbnail
+				thumbScale = 0.8, thumbW = 97 * thumbScale, thumbH = 55 * thumbScale,
+				// Margin around the thumbnail
+				thumbMargin = 4.,
+				// Space between list items
+				listItemMargin = 5.;
+
+		final Pattern highlightPattern = Pattern
+				.compile("<HavenSearch-QueryText-Placeholder>(.*?)</HavenSearch-QueryText-Placeholder>");
+
+		double yCursor = yMargin + anchor.getMinY(), xCursor = xMargin + anchor.getMinX();
+
+		int docsOnPage = 0;
+
+		final Document[] docs = data.getDocs();
+		for (int docIdx = 0; docIdx < docs.length; ++docIdx) {
+			final Document doc = docs[docIdx];
+
+			if (sl == null) {
+				sl = ppt.createSlide();
+				yCursor = yMargin + anchor.getMinY();
+				xCursor = xMargin + anchor.getMinX();
+				docsOnPage = 0;
+
+				double yStep = 0;
+
+				if (StringUtils.isNotBlank(results)) {
+					final XSLFTextBox textBox = sl.createTextBox();
+					textBox.clearText();
+					final Rectangle2D.Double textBounds = new Rectangle2D.Double(xCursor, yCursor,
+							Math.max(0, anchor.getMaxX() - xCursor - xMargin), 20);
+					textBox.setAnchor(textBounds);
+
+					addTextRun(textBox.addNewTextParagraph(), results, 12., Color.LIGHT_GRAY);
+
+					yStep = textBox.getTextHeight();
+				}
+
+				if (StringUtils.isNotBlank(sortBy)) {
+					final XSLFTextBox sortByEl = sl.createTextBox();
+					sortByEl.clearText();
+					final XSLFTextParagraph sortByText = sortByEl.addNewTextParagraph();
+					sortByText.setTextAlign(TextParagraph.TextAlign.RIGHT);
+
+					addTextRun(sortByText, sortBy, 12., Color.LIGHT_GRAY);
+
+					sortByEl.setAnchor(new Rectangle2D.Double(xCursor, yCursor,
+							Math.max(0, anchor.getMaxX() - xCursor - xMargin), 20));
+
+					yStep = Math.max(sortByEl.getTextHeight(), yStep);
+				}
+
+				if (yStep > 0) {
+					yCursor += listItemMargin + yStep;
+				}
+			}
+
+			XSLFAutoShape icon = null;
+			if (data.isDrawIcons()) {
+				icon = sl.createAutoShape();
+				icon.setShapeType(ShapeType.SNIP_1_RECT);
+				icon.setAnchor(new Rectangle2D.Double(xCursor, yCursor + listItemMargin, iconWidth, iconHeight));
+				icon.setLineColor(Color.decode("#888888"));
+				icon.setLineWidth(2.0);
+
+				xCursor += iconWidth;
+			}
+
+			final XSLFTextBox listEl = sl.createTextBox();
+			listEl.clearText();
+			listEl.setAnchor(new Rectangle2D.Double(xCursor, yCursor, Math.max(0, anchor.getMaxX() - xCursor - xMargin),
+					Math.max(0, anchor.getMaxY() - yCursor)));
+
+			final XSLFTextParagraph titlePara = listEl.addNewTextParagraph();
+			addTextRun(titlePara, doc.getTitle(), data.getTitleFontSize(), Color.BLACK).setBold(true);
+
+			if (StringUtils.isNotBlank(doc.getDate())) {
+				final XSLFTextParagraph datePara = listEl.addNewTextParagraph();
+				datePara.setLeftMargin(5.);
+				addTextRun(datePara, doc.getDate(), data.getDateFontSize(), Color.GRAY).setItalic(true);
+			}
+
+			if (StringUtils.isNotBlank(doc.getRef())) {
+				addTextRun(listEl.addNewTextParagraph(), doc.getRef(), data.getRefFontSize(), Color.GRAY);
+			}
+
+			final double thumbnailOffset = listEl.getTextHeight();
+
+			final XSLFTextParagraph contentPara = listEl.addNewTextParagraph();
+
+			Rectangle2D.Double pictureAnchor = null;
+			XSLFPictureData pictureData = null;
+
+			if (StringUtils.isNotBlank(doc.getThumbnail())) {
+				try {
+					// Picture reuse is automatic
+					pictureData = addPictureData(imageSource, ppt, doc.getThumbnail());
+					// We reserve space for the picture, but we don't actually add it yet.
+					// The reason is we may have to remove it later if it doesn't fit; but due to a
+					// quirk of OpenOffice,
+					// deleting the picture shape removes the pictureData as well; which is a
+					// problem since the
+					// pictureData can be shared between multiple pictures.
+					pictureAnchor = new Rectangle2D.Double(xCursor, yCursor + thumbnailOffset + thumbMargin, thumbW,
+							thumbH);
+
+					// If there is enough horizontal space, put the text summary to the right of the
+					// thumbnail image,
+					// otherwise put it under the thumbnail,
+					if (listEl.getAnchor().getWidth() > 2.5 * thumbW) {
+						contentPara.setLeftMargin(thumbW);
+					} else {
+						contentPara.addLineBreak().setFontSize(thumbH);
+					}
+
+				} catch (RuntimeException e) {
+					// if there's any errors, we'll just ignore the image
+				}
+			}
+
+			final String rawSummary = doc.getSummary();
+			if (StringUtils.isNotBlank(rawSummary)) {
+				// HTML treats newlines and multiple whitespace as a single whitespace.
+				final String summary = rawSummary.replaceAll("\\s+", " ");
+				final Matcher matcher = highlightPattern.matcher(summary);
+				int idx = 0;
+
+				while (matcher.find()) {
+					final int start = matcher.start();
+
+					if (idx < start) {
+						addTextRun(contentPara, summary.substring(idx, start), data.getSummaryFontSize(),
+								Color.DARK_GRAY);
+					}
+
+					addTextRun(contentPara, matcher.group(1), data.getSummaryFontSize(), Color.DARK_GRAY).setBold(true);
+					idx = matcher.end();
+				}
+
+				if (idx < summary.length()) {
+					addTextRun(contentPara, summary.substring(idx), data.getSummaryFontSize(), Color.DARK_GRAY);
+				}
+			}
+
+			double elHeight = Math.max(listEl.getTextHeight(), iconHeight);
+			if (pictureAnchor != null) {
+				elHeight = Math.max(elHeight, pictureAnchor.getMaxY() - yCursor);
+			}
+
+			yCursor += elHeight;
+			xCursor = xMargin + anchor.getMinX();
+
+			docsOnPage++;
+
+			if (yCursor > anchor.getMaxY()) {
+				if (docsOnPage > 1) {
+					// If we drew more than one list element on this page; and we exceeded the
+					// available space,
+					// delete the last element's shapes and redraw it on the next page.
+					// We don't have to remove the picture since we never added it.
+					sl.removeShape(listEl);
+					if (icon != null) {
+						sl.removeShape(icon);
+					}
+
+					--docIdx;
+				} else if (pictureAnchor != null) {
+					// We've confirmed we need the picture, add it.
+					sl.createPicture(pictureData).setAnchor(pictureAnchor);
+				}
+
+				sl = null;
+
+				if (!paginate) {
+					break;
+				}
+			} else {
+				yCursor += listItemMargin;
+
+				if (pictureAnchor != null) {
+					// We've confirmed we need the picture, add it.
+					sl.createPicture(pictureData).setAnchor(pictureAnchor);
+				}
+			}
+		}
+	}
+
+	/**
+	 * Utility function to create a text run with specified formatting.
+	 * 
+	 * @param paragraph
+	 *            the paragraph to add to.
+	 * @param text
+	 *            the text string to add, can contain e.g. '\n' for newlines.
+	 * @param fontSize
+	 *            font size.
+	 * @param color
+	 *            font colour.
+	 * @return the new text run which was added to the paragraph.
+	 */
+	private static XSLFTextRun addTextRun(final XSLFTextParagraph paragraph, final String text, final double fontSize,
+			final Color color) {
+		final XSLFTextRun summary = paragraph.addNewTextRun();
+		summary.setFontColor(color);
+		summary.setText(text);
+		summary.setFontSize(fontSize);
+		return summary;
+	}
+
+	@Override
+	public XMLSlideShow graph(final DategraphData data) throws TemplateLoadException {
+		final SlideShowTemplate template = loadTemplate();
+		final XMLSlideShow ppt = template.getSlideShow();
+		final int shapeId = 1;
+		final String relId = "relId" + shapeId;
+
+		addDategraph(template, ppt.createSlide(), null, data, shapeId, relId);
+
+		return ppt;
+	}
+
+	/**
+	 * Internal implementation to add a date graph (aka xy scatterplot chart with
+	 * time-series x-axis) to a slide, based on a template.
+	 * 
+	 * @param template
+	 *            the parsed template information.
+	 * @param slide
+	 *            the slide to add to.
+	 * @param anchor
+	 *            optional bounding rectangle to draw onto, in PowerPoint
+	 *            coordinates. If null, we'll use the bounds from the original
+	 *            template chart.
+	 * @param data
+	 *            the date graph data.
+	 * @param shapeId
+	 *            the slide shape ID, should be unique within the slide.
+	 * @param relId
+	 *            the relation ID to the chart data.
+	 * @throws TemplateLoadException
+	 *             if we can't create the date graph; most likely due to an invalid
+	 *             template.
+	 */
+	private static void addDategraph(final SlideShowTemplate template, final XSLFSlide slide,
+			final Rectangle2D.Double anchor, final DategraphData data, final int shapeId, final String relId)
+			throws TemplateLoadException {
+		if (!data.validateInput()) {
+			throw new IllegalArgumentException("Invalid data provided");
+		}
+
+		final List<DategraphData.Row> rows = data.getRows();
+		boolean useSecondaryAxis = rows.stream().anyMatch(DategraphData.Row::isSecondaryAxis);
+
+		if (rows.stream().allMatch(DategraphData.Row::isSecondaryAxis)) {
+			// If everything is on the secondary axis; just use the primary axis
+			rows.forEach(row -> row.setSecondaryAxis(false));
+			useSecondaryAxis = false;
+		}
+
+		final XSSFWorkbook wb = writeChart(data);
+
+		final XMLSlideShow ppt = template.getSlideShow();
+
+		slide.getXmlObject().getCSld().getSpTree().addNewGraphicFrame()
+				.set(template.getGraphChartShapeXML(relId, shapeId, "chart" + shapeId, anchor));
+
+		XSLFChart baseChart = template.getGraphChart();
+		final CTChartSpace chartSpace = (CTChartSpace) baseChart.getCTChartSpace().copy();
+
+		final CTChart ctChart = chartSpace.getChart();
+		final CTPlotArea plotArea = ctChart.getPlotArea();
+		final XSSFSheet sheet = wb.getSheetAt(0);
+
+		// In the template, we have two <c:scatterChart> objects, one for the primary
+		// axis, one for the secondary.
+		if (!useSecondaryAxis) {
+			// Discard the extra chart and its two axes.
+			// OpenOffice is happy enough if you remove the scatterplot chart, but
+			// PowerPoint will complain it's a corrupt
+			// file and unhelpfully delete the entire chart when you choose 'repair' if any
+			// orphan axes remain.
+			plotArea.removeScatterChart(1);
+			plotArea.removeValAx(3);
+			plotArea.removeValAx(2);
+		}
+
+		for (CTScatterChart ctScatterChart : plotArea.getScatterChartArray()) {
+			for (final CTScatterSer ser : ctScatterChart.getSerArray()) {
+				ser.getDPtList().clear();
+			}
+		}
+
+		int primarySeriesCount = 0;
+		int secondarySeriesCount = 0;
+
+		for (int seriesIdx = 0; seriesIdx < rows.size(); ++seriesIdx) {
+			final DategraphData.Row row = rows.get(seriesIdx);
+
+			final CTScatterChart tgtChart = plotArea.getScatterChartArray(row.isSecondaryAxis() ? 1 : 0);
+
+			final CTScatterSer[] serArray = tgtChart.getSerArray();
+			final int createdSeriesIdx = row.isSecondaryAxis() ? secondarySeriesCount++ : primarySeriesCount++;
+
+			final CTScatterSer curSeries;
+
+			if (createdSeriesIdx < serArray.length) {
+				curSeries = serArray[createdSeriesIdx];
+			} else {
+				curSeries = tgtChart.addNewSer();
+				curSeries.set(serArray[0].copy());
+			}
+
+			updateCTScatterSer(data, sheet, seriesIdx, curSeries);
+		}
+
+		try {
+			writeChart(ppt, slide, baseChart, chartSpace, wb, relId);
+		} catch (IOException | InvalidFormatException e) {
+			throw new TemplateLoadException("Unexpected error writing files from loaded template", e);
+		}
+	}
+
+	/**
+	 * Utility function to update a scatterplot line's data series.
+	 * 
+	 * @param data
+	 *            the datagraph data.
+	 * @param sheet
+	 *            the Excel sheet which contains corresponding data from the
+	 *            scatterplot data series.
+	 * @param seriesIdx
+	 *            the index of the data in the dategraph data.
+	 * @param series
+	 *            the XML object representing the series in the chart.
+	 */
+	private static void updateCTScatterSer(final DategraphData data, final XSSFSheet sheet, final int seriesIdx,
+			final CTScatterSer series) {
+		final String sheetName = sheet.getSheetName();
+
+		// the series idx starts from 0
+		final DategraphData.Row row = data.getRows().get(seriesIdx);
+		final String title = row.getLabel();
+		final Color color = Color.decode(row.getColor());
+
+		series.getOrder().setVal(seriesIdx);
+		series.getIdx().setVal(seriesIdx);
+
+		final CTSolidColorFillProperties fill = series.getSpPr().getLn().getSolidFill();
+
+		// We have to set any possible colour type, PowerPoint throws an error if
+		// there's multiple fills, and we don't
+		// know what colour type the user may have used in their template slide.
+		if (fill.getSchemeClr() != null) {
+			fill.unsetSchemeClr();
+		}
+		if (fill.getSrgbClr() != null) {
+			fill.unsetSrgbClr();
+		}
+		if (fill.getHslClr() != null) {
+			fill.unsetHslClr();
+		}
+		if (fill.getPrstClr() != null) {
+			fill.unsetPrstClr();
+		}
+		if (fill.getScrgbClr() != null) {
+			fill.unsetScrgbClr();
+		}
+		if (fill.getSysClr() != null) {
+			fill.unsetSysClr();
+		}
+
+		final CTSRgbColor fillClr = fill.addNewSrgbClr();
+		final byte[] colorBytes = { (byte) color.getRed(), (byte) color.getGreen(), (byte) color.getBlue() };
+		fillClr.setVal(colorBytes);
+
+		final CTMarker marker = series.getMarker();
+
+		if (marker != null) {
+			final CTShapeProperties markerSpPr = marker.getSpPr();
+			unsetSpPrFills(markerSpPr);
+			markerSpPr.addNewSolidFill().addNewSrgbClr().setVal(colorBytes);
+
+			final CTLineProperties markerLn = markerSpPr.getLn();
+			if (markerLn != null) {
+				unsetLineFills(markerLn);
+				markerLn.addNewSolidFill().addNewSrgbClr().setVal(colorBytes);
+			}
+		}
+
+		final CTStrRef strRef = series.getTx().getStrRef();
+		strRef.getStrCache().getPtArray()[0].setV(title);
+
+		strRef.setF(new CellReference(sheetName, 0, seriesIdx + 1, true, true).formatAsString());
+
+		final long[] timestamps = data.getTimestamps();
+		{
+			final CTNumRef timestampCatNumRef = series.getXVal().getNumRef();
+			timestampCatNumRef.setF(new AreaReference(new CellReference(sheetName, 1, 0, true, true),
+					new CellReference(sheetName, 1 + timestamps.length, 0, true, true)).formatAsString());
+
+			final CTNumData timeStampCatNumCache = timestampCatNumRef.getNumCache();
+			timeStampCatNumCache.getPtCount().setVal(timestamps.length);
+			timeStampCatNumCache.setPtArray(null);
+
+			for (int ii = 0; ii < timestamps.length; ++ii) {
+				final CTNumVal pt = timeStampCatNumCache.addNewPt();
+				pt.setIdx(ii);
+				pt.setV(sheet.getRow(1 + ii).getCell(0).getRawValue());
+			}
+		}
+
+		{
+			final double[] seriesData = row.getValues();
+
+			final CTNumRef valuesNumRef = series.getYVal().getNumRef();
+			valuesNumRef.setF(new AreaReference(new CellReference(sheetName, 1, seriesIdx + 1, true, true),
+					new CellReference(sheetName, 1 + timestamps.length, seriesIdx + 1, true, true)).formatAsString());
+
+			final CTNumData valuesNumCache = valuesNumRef.getNumCache();
+			valuesNumCache.getPtCount().setVal(timestamps.length);
+			valuesNumCache.setPtArray(null);
+
+			for (int ii = 0; ii < timestamps.length; ++ii) {
+				final CTNumVal pt = valuesNumCache.addNewPt();
+				pt.setIdx(ii);
+				pt.setV(Double.toString(seriesData[ii]));
+			}
+		}
+	}
+
+	/**
+	 * Utility function to write the date graph data as a Excel workbook; required
+	 * since PowerPoint charts actually embed an Excel file with corresponding data.
+	 * If invalid, it'll open in OpenOffice fine, but PowerPoint will complain that
+	 * the presentation is corrupted.
+	 * 
+	 * @param data
+	 *            the date graph data.
+	 * @return a new Excel workbook with specified data on a new sheet.
+	 */
+	private static XSSFWorkbook writeChart(final DategraphData data) {
+		final XSSFWorkbook wb = new XSSFWorkbook();
+		final XSSFSheet sheet = wb.createSheet("Sheet1");
+
+		final CellStyle cellStyle = wb.createCellStyle();
+		cellStyle.setDataFormat((short) 14);
+
+		final List<DategraphData.Row> rows = data.getRows();
+		final long[] timestamps = data.getTimestamps();
+
+		final XSSFRow header = sheet.createRow(0);
+		header.createCell(0).setCellValue("Timestamp");
+		for (int ii = 0; ii < rows.size(); ++ii) {
+			header.createCell(ii + 1).setCellValue(rows.get(ii).getLabel());
+		}
+
+		for (int rowIdx = 0; rowIdx < timestamps.length; ++rowIdx) {
+			final XSSFRow row = sheet.createRow(rowIdx + 1);
+
+			final XSSFCell cell = row.createCell(0);
+			cell.setCellStyle(cellStyle);
+			cell.setCellValue(new Date(timestamps[rowIdx] * 1000));
+
+			for (int ii = 0; ii < rows.size(); ++ii) {
+				row.createCell(ii + 1).setCellValue(rows.get(ii).getValues()[rowIdx]);
+			}
+		}
+
+		return wb;
+	}
+
+	@Override
+	public XMLSlideShow report(final ReportData report, final boolean slidePerVisualizer) throws TemplateLoadException {
+		final SlideShowTemplate template = loadTemplate();
+		final XMLSlideShow ppt = template.getSlideShow();
+
+		final Rectangle2D.Double pageAnchor = createPageAnchor(ppt);
+		double width = pageAnchor.getWidth();
+		double height = pageAnchor.getHeight();
+
+		if (!slidePerVisualizer) {
+			// If drawing multiple visualizations on a single slide, we need to render the
+			// charts first since adding
+			// chart objects directly via XML after calling slide.getShapes() or
+			// createShape() etc. will break things.
+			Arrays.sort(report.getChildren(), Comparator.comparingInt(PowerPointServiceImpl::prioritizeCharts));
+		}
+
+		// As above, we need to have a separate slide to place our sizing textbox for
+		// calculations.
+		XSLFSlide sizingSlide = ppt.createSlide();
+		// This is the slide to draw on.
+		XSLFSlide slide = ppt.createSlide();
+
+		int shapeId = 1;
+		boolean first = true;
+
+		for (final ReportData.Child child : report.getChildren()) {
+			if (slidePerVisualizer && !first) {
+				sizingSlide = ppt.createSlide();
+				slide = ppt.createSlide();
+			}
+
+			first = false;
+
+			final ComposableElement data = child.getData();
+			final Rectangle2D.Double anchor = new Rectangle2D.Double(pageAnchor.getMinX() + width * child.getX(),
+					pageAnchor.getMinY() + height * child.getY(), width * child.getWidth(), height * child.getHeight());
+
+			if (child.getMargin() >= 0) {
+				final double margin = child.getMargin();
+				final double marginX2 = margin * 2;
+				final double textMargin = child.getTextMargin();
+
+				if (anchor.getWidth() > marginX2) {
+					double xCursor = anchor.getMinX() + margin, xWidthAvail = anchor.getWidth() - marginX2,
+							yCursor = anchor.getMinY() + margin, yHeightAvail = anchor.getHeight() - marginX2;
+					XSLFTextBox sizingBox = null;
+
+					final String title = child.getTitle();
+					if (StringUtils.isNotEmpty(title) && yHeightAvail > 0) {
+						sizingBox = sizingSlide.createTextBox();
+						final Rectangle2D.Double sizingAnchor = new Rectangle2D.Double(xCursor, yCursor, xWidthAvail,
+								yHeightAvail);
+						sizingBox.setAnchor(sizingAnchor);
+						sizingBox.clearText();
+						addTextRun(sizingBox.addNewTextParagraph(), title, child.getFontSize(), Color.BLACK)
+								.setFontFamily(child.getFontFamily());
+
+						final double textHeight = sizingBox.getTextHeight() + textMargin;
+						yCursor += textHeight;
+						yHeightAvail -= textHeight;
+					}
+
+					if (yHeightAvail > 0) {
+						anchor.setRect(xCursor, yCursor, xWidthAvail, yHeightAvail);
+					} else if (sizingBox != null) {
+						sizingSlide.removeShape(sizingBox);
+					}
+				}
+			}
+
+			if (data instanceof DategraphData) {
+				addDategraph(template, slide, anchor, (DategraphData) data, shapeId, "relId" + shapeId);
+				shapeId++;
+			} else if (data instanceof ListData) {
+				final ListData listData = (ListData) data;
+				addList(imageSource, ppt, slide, anchor, false, listData, null, null);
+			} else if (data instanceof MapData) {
+				final MapData mapData = (MapData) data;
+				addMap(slide, anchor, addPictureData(imageSource, ppt, mapData.getImage()), mapData.getMarkers());
+			} else if (data instanceof SunburstData) {
+				addSunburst(template, slide, anchor, (SunburstData) data, shapeId, "relId" + shapeId);
+				shapeId++;
+			} else if (data instanceof TableData) {
+				final TableData tableData = (TableData) data;
+				addTable(slide, anchor, tableData.getRows(), tableData.getCols(), tableData.getCells(), true);
+			} else if (data instanceof TopicMapData) {
+				addTopicMap(slide, anchor, (TopicMapData) data);
+			} else if (data instanceof TextData) {
+				addTextData(slide, anchor, (TextData) data);
+			} else if (data instanceof BarData) {
+				addBarChart(template, slide, anchor, (BarData) data, shapeId, "relId" + shapeId);
+				shapeId++;
+			} else if (data instanceof PieChartData) {
+				addPieChart(template, slide, anchor, (PieChartData) data, shapeId, "relId" + shapeId);
+				shapeId++;
+			}
+
+			if (slidePerVisualizer) {
+				transferSizedTextboxes(ppt, slide, sizingSlide);
+			}
+		}
+
+		if (!slidePerVisualizer) {
+			transferSizedTextboxes(ppt, slide, sizingSlide);
+		}
+
+		return ppt;
+	}
+
+	private static void transferSizedTextboxes(final XMLSlideShow ppt, final XSLFSlide slide,
+			final XSLFSlide sizingSlide) {
+		// Clone all text boxes to the original slide afterward, and remove the sizing
+		// slide
+		for (XSLFShape shape : sizingSlide.getShapes()) {
+			if (shape instanceof XSLFTextBox) {
+				final XSLFTextBox src = (XSLFTextBox) shape;
+				final XSLFTextBox textBox = slide.createTextBox();
+				textBox.setAnchor(src.getAnchor());
+				textBox.clearText();
+				src.forEach(srcPara -> textBox.addNewTextParagraph().getXmlObject().set(srcPara.getXmlObject().copy()));
+			}
+		}
+
+		ppt.removeSlide(ppt.getSlides().indexOf(sizingSlide));
+	}
+
+	/**
+	 * Utility function to render a TextData object as multiple text runs on the
+	 * screen in a single text paragraph. Note that newlines are not added
+	 * automatically; this is so we can support adjacent text with different
+	 * formatting.
+	 * 
+	 * @param slide
+	 *            the slide to add to.
+	 * @param anchor
+	 *            bounding rectangle to draw onto, in PowerPoint coordinates.
+	 * @param data
+	 *            the text data to render.
+	 */
+	private void addTextData(final XSLFSlide slide, final Rectangle2D.Double anchor, final TextData data) {
+		final XSLFTextBox textBox = slide.createTextBox();
+		textBox.setAnchor(anchor);
+		textBox.clearText();
+
+		final XSLFTextParagraph para = textBox.addNewTextParagraph();
+
+		for (final TextData.Paragraph runData : data.getText()) {
+			final XSLFTextRun run = para.addNewTextRun();
+			run.setText(runData.getText());
+			run.setFontSize(runData.getFontSize());
+			run.setBold(runData.isBold());
+			run.setItalic(runData.isItalic());
+			run.setFontColor(Color.decode(runData.getColor()));
+
+			if (textBox.getTextHeight() > anchor.getHeight()) {
+				// Try removing words from the last box until we find something that fits, or we
+				// run out of words
+				final String trimmedText = runData.getText().trim();
+				run.setText(trimmedText);
+
+				for (final StringBuilder text = new StringBuilder(trimmedText); textBox.getTextHeight() > anchor
+						.getHeight() && text.length() > 0;) {
+					final int lastSpaceIdx = Math.max(text.lastIndexOf(" "), text.lastIndexOf("\n"));
+
+					if (lastSpaceIdx < 0) {
+						break;
+					}
+
+					text.delete(lastSpaceIdx, text.length());
+					// Add a trailing ellipsis unless it's empty or already contained a trailing
+					// ellipsis or "..." at the final truncated position.
+					run.setText(
+							text.length() > 0 ? text.toString().replaceFirst("(\\s*(\\.{3}|\u2026))?$", "\u2026") : "");
+				}
+
+				// The font metrics aren't going to be perfect (due to unavailability of fonts
+				// etc.) so we force the truncated text to fit.
+				textBox.setTextAutofit(TextShape.TextAutofit.NORMAL);
+
+				break;
+			}
+		}
+	}
+
+	/**
+	 * Utility function to define a sort order which places date graph and sunburst
+	 * to the front, since they have to be added to the XML before any other shapes
+	 * are drawn on the slide.
+	 * 
+	 * @param child
+	 *            the child to test.
+	 * @return -1 for date graphs/sunbursts, 0 otherwise.
+	 */
+	private static int prioritizeCharts(final ReportData.Child child) {
+		final ComposableElement d = child.getData();
+		return d instanceof DategraphData || d instanceof SunburstData ? -1 : 0;
+	}
+
+	/**
+	 * Utility function to generate a new unique package part name within a
+	 * PowerPoint zip file, given a base name which has a number before the file
+	 * extension.
+	 * 
+	 * @param opcPackage
+	 *            the PowerPoint zip package.
+	 * @param baseName
+	 *            the original name.
+	 * @return a new unique package part name
+	 * @throws InvalidFormatException
+	 *             if there was an exception while generating the new name.
+	 */
+	private static PackagePartName generateNewName(final OPCPackage opcPackage, final String baseName)
+			throws InvalidFormatException {
+		final Pattern pattern = Pattern.compile("(.*?)(\\d+)(\\.\\w+)?$");
+
+		final Matcher matcher = pattern.matcher(baseName);
+
+		if (matcher.find()) {
+			int num = Integer.parseInt(matcher.group(2));
+
+			for (int ii = num + 1; ii < Integer.MAX_VALUE; ++ii) {
+				final PackagePartName testName = PackagingURIHelper
+						.createPartName(matcher.group(1) + ii + matcher.group(3));
+
+				if (opcPackage.getPart(testName) == null) {
+					return testName;
+				}
+			}
+		} else {
+			// if there is no number before extension
+			final Pattern pattern1 = Pattern.compile("(.*?)(\\.\\w+)?$");
+			final Matcher matcher1 = pattern1.matcher(baseName);
+			if (matcher1.find()) {
+
+				for (int ii = 0; ii < Integer.MAX_VALUE; ii++) {
+
+					final PackagePartName testName = PackagingURIHelper
+							.createPartName(matcher1.group(1) + ii + matcher1.group(2));
+
+					if (opcPackage.getPart(testName) == null) {
+						return testName;
+					}
+				}
+
+			}
+		}
+
+		// If none of the pattern match - should never happen - should throw Exception
+		return PackagingURIHelper.createPartName(baseName);
+	}
+
+	/**
+	 * Utility function to write a chart object to a slide based on a template.
+	 * Creates new copies of referred objects in the chart, e.g. colors1.xml and
+	 * style1.xml, and writes the Excel workbook data to new files in the PowerPoint
+	 * .zip structure.
+	 * 
+	 * @param pptx
+	 *            the presentation to add to.
+	 * @param slide
+	 *            the slide to add to.
+	 * @param templateChart
+	 *            the original template chart XML reference object from the
+	 *            template.
+	 * @param modifiedChart
+	 *            the new chart XML object.
+	 * @param workbook
+	 *            the Excel workbook data corresponding to the chart XML data.
+	 * @param relId
+	 *            the relation id for the new chart.
+	 * @throws IOException
+	 *             if there's IO errors working with the chart.
+	 * @throws InvalidFormatException
+	 *             if there's errors generating new package part names for the new
+	 *             copies of the data.
+	 */
+	private static void writeChart(final XMLSlideShow pptx, final XSLFSlide slide, final XSLFChart templateChart,
+			final CTChartSpace modifiedChart, final XSSFWorkbook workbook, final String relId)
+			throws IOException, InvalidFormatException {
+
+		final OPCPackage opcPackage = pptx.getPackage();
+
+		// this is the package part name for the new chart - should return
+		// /ppt/charts/chart1.xml
+		final PackagePartName chartName = generateNewName(opcPackage,
+				templateChart.getPackagePart().getPartName().getURI().getPath());
+		System.out.println(chartName);
+
+		// write the complete chart xml inside c:chartSpace so that this can be saved
+		final ByteArrayOutputStream baos = new ByteArrayOutputStream();
+		XmlOptions xmlOptions = new XmlOptions(DEFAULT_XML_OPTIONS);
+		xmlOptions.setSaveSyntheticDocumentElement(
+				new QName(CTChartSpace.type.getName().getNamespaceURI(), "chartSpace", "c"));
+		modifiedChart.save(baos, xmlOptions);
+
+		final PackagePart chartPart = opcPackage.createPart(chartName, XSLFRelation.CHART.getContentType(), baos);
+
+		// add the relation between this chart part and the slide
+		slide.getPackagePart().addRelationship(chartName, TargetMode.INTERNAL, XSLFRelation.CHART.getRelation(), relId);
+
+		// loop through all parts of the chart from template
+		// if there is an excel part associated (found by contenttype)
+		// then copy the workbook data (data which was used to generate the modified
+		// chart) to partCopy
+		// otherwise if its a different part(not a workbook), then just copy it as it is
+		// from corresponding part of the template chart
+		for (final POIXMLDocumentPart.RelationPart part : templateChart.getRelationParts()) {
+
+			final ByteArrayOutputStream partCopy = new ByteArrayOutputStream();
+			final URI targetURI = part.getRelationship().getTargetURI();
+
+			final String contentType = part.getDocumentPart().getPackagePart().getContentType();
+
+			PackagePartName name;
+
+			if ("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet".equals(contentType)) {
+				workbook.write(partCopy);
+				System.out.println("TargetURI is " + targetURI);
+				name = generateNewName(opcPackage, targetURI.getPath());
+
+				opcPackage.createPart(name, contentType, partCopy);
+				chartPart.addRelationship(name, TargetMode.INTERNAL, part.getRelationship().getRelationshipType());
+			} else {
+				IOUtils.copy(part.getDocumentPart().getPackagePart().getInputStream(), partCopy);
+				name = generateNewName(opcPackage, targetURI.getPath());
+
+				opcPackage.createPart(name, contentType, partCopy);
+				chartPart.addRelationship(name, TargetMode.INTERNAL, part.getRelationship().getRelationshipType());
+			}
+
+		}
+
+	}
+
 }
