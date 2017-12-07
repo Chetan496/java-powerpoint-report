@@ -14,6 +14,7 @@ public class PieChartData implements ComposableElement {
 	
 	private double[] series;
 	private String[] categories;
+	private String chartLabel;
 	
 	public boolean validateInput() {
 		

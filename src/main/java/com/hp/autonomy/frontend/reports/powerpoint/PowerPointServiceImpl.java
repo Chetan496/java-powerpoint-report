@@ -40,9 +40,11 @@ import org.apache.poi.hssf.util.CellReference;
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import org.apache.poi.openxml4j.exceptions.NotOfficeXmlFileException;
 import org.apache.poi.openxml4j.opc.OPCPackage;
+import org.apache.poi.openxml4j.opc.PackageNamespaces;
 import org.apache.poi.openxml4j.opc.PackagePart;
 import org.apache.poi.openxml4j.opc.PackagePartName;
 import org.apache.poi.openxml4j.opc.PackageRelationship;
+import org.apache.poi.openxml4j.opc.PackageRelationshipCollection;
 import org.apache.poi.openxml4j.opc.PackagingURIHelper;
 import org.apache.poi.openxml4j.opc.TargetMode;
 import org.apache.poi.sl.usermodel.ShapeType;
@@ -89,6 +91,7 @@ import org.openxmlformats.schemas.drawingml.x2006.chart.CTNumData;
 import org.openxmlformats.schemas.drawingml.x2006.chart.CTNumDataSource;
 import org.openxmlformats.schemas.drawingml.x2006.chart.CTNumRef;
 import org.openxmlformats.schemas.drawingml.x2006.chart.CTNumVal;
+import org.openxmlformats.schemas.drawingml.x2006.chart.CTPieChart;
 import org.openxmlformats.schemas.drawingml.x2006.chart.CTPieSer;
 import org.openxmlformats.schemas.drawingml.x2006.chart.CTPlotArea;
 import org.openxmlformats.schemas.drawingml.x2006.chart.CTScatterChart;
@@ -202,7 +205,10 @@ public class PowerPointServiceImpl implements PowerPointService {
         }
         catch(NotOfficeXmlFileException|POIXMLException e) {
             throw new TemplateLoadException("File is not a valid Office PowerPoint file", e);
-        }
+        } catch (InvalidFormatException e) {
+			
+			throw new IllegalArgumentException("c");
+		}
     }
 
     /**
@@ -235,8 +241,8 @@ public class PowerPointServiceImpl implements PowerPointService {
     	final SlideShowTemplate template = loadTemplate();
     	
     	final XMLSlideShow ppt = template.getSlideShow();
+    	
         final XSLFSlide slide = ppt.createSlide();
-        
         
         final int shapeId = 1;
         
@@ -259,14 +265,110 @@ public class PowerPointServiceImpl implements PowerPointService {
      * @param relId the relation ID to the chart data.
      * @throws TemplateLoadException if we can't create the piechart; most likely due to an invalid template.
      */
-    private void addPieChart(final SlideShowTemplate template, 
-    		XSLFSlide slide, 
+    private void addPieChart(
+    		final SlideShowTemplate template, 
+    		final XSLFSlide slide, 
     		final Rectangle2D.Double anchor, 
     		final PieChartData pieChartData,
 			final int shapeId, final String relId) {
 		
     	
+    	if(!pieChartData.validateInput() ) {
+    		throw new IllegalArgumentException("Invalid data provided");
+    	}
     	
+    	//this is adding chart1 and shapeid=1
+    	slide.getXmlObject()
+        .getCSld()
+        .getSpTree()
+        .addNewGraphicFrame()
+        .set( template.getPieChartShapeXML(relId, shapeId, "chart"+shapeId, anchor)  );
+    	
+    	/*Sheet created.. we need to set data in this sheet while we build the chart */
+        final XSSFWorkbook workbook = new XSSFWorkbook();
+        final XSSFSheet sheet = workbook.createSheet();
+        
+        final XSLFChart templateChart = template.getPieChart();
+        
+        final CTChartSpace chartSpace = (CTChartSpace) templateChart.getCTChartSpace().copy();
+        final CTChart ctChart = chartSpace.getChart();
+        final CTPlotArea plotArea = ctChart.getPlotArea();
+        final CTPieChart pieChart = plotArea.getPieChartArray(0);
+        
+        if(pieChart == null) {
+        	throw new IllegalStateException("Template does not have a pie chart");
+        }
+        
+        /*Now start updating the chart with the data.. */
+        /*Piechart has only one series.. */
+        CTPieSer ctPieSer = pieChart.getSerArray(0);
+        
+        //update text for this series
+        CTSerTx tx = ctPieSer.getTx();
+        tx.getStrRef().getStrCache().getPtArray(0).setV( pieChartData.getChartLabel() );
+        sheet.createRow(0).createCell(1).setCellValue(pieChartData.getChartLabel());
+        String seriesRef = new CellReference(sheet.getSheetName(), 0,  1, true, true).formatAsString();
+		tx.getStrRef().setF(seriesRef);
+        
+		
+		// category axis data
+		CTAxDataSource cat = ctPieSer.getCat();
+		CTStrData catData = cat.getStrRef().getStrCache();
+
+		// Values
+		CTNumDataSource val = ctPieSer.getVal();
+		CTNumData numData = val.getNumRef().getNumCache();
+
+		catData.setPtArray(null); // unset old axis text
+		numData.setPtArray(null); // unset old values
+
+        int idx = 0;
+        int rownum = 1;
+        
+        for(double seriesVal:pieChartData.getSeries() ) {
+        	
+        	CTNumVal numVal = numData.addNewPt();
+			numVal.setIdx(idx);
+			numVal.setV(new Double( seriesVal ).toString());
+			
+			
+			String categoryLabel = pieChartData.getCategories()[idx];
+			CTStrVal sVal = catData.addNewPt();
+			sVal.setIdx(idx);
+			sVal.setV( categoryLabel);
+			
+			XSSFRow row = createOrGetRow(sheet, rownum);
+			row.createCell(0).setCellValue(categoryLabel);
+			row.createCell(1).setCellValue(seriesVal );
+			
+			idx++;
+			rownum++;
+			
+			
+        }
+        
+		numData.getPtCount().setVal(idx);
+		catData.getPtCount().setVal(idx);
+		
+		
+		String numDataRange = new CellRangeAddress(1, rownum - 1,  1,  1)
+				.formatAsString(sheet.getSheetName(), true);
+		val.getNumRef().setF(numDataRange);
+		
+		String axisDataRange = new CellRangeAddress(1, rownum - 1, 0, 0)
+				.formatAsString(sheet.getSheetName(), true);
+		cat.getStrRef().setF(axisDataRange);
+        
+		
+	    try {
+		 	writeChart(template.getSlideShow(), slide, templateChart, chartSpace, workbook, relId);
+		 } catch (InvalidFormatException e) {
+		 	// TODO Auto-generated catch block
+		 	e.printStackTrace();
+		 } catch (IOException e) {
+			// TODO Auto-generated catch block
+		 	e.printStackTrace();
+		 }
 		
 	}
     
@@ -484,6 +586,18 @@ public class PowerPointServiceImpl implements PowerPointService {
         final XMLSlideShow ppt = template.getSlideShow();
         final XSLFSlide slide = ppt.createSlide();
 
+        System.out.println("relations before");
+        try { 
+			PackageRelationshipCollection chartRelations = slide.getPackagePart().getRelationships();
+			chartRelations.forEach((PackageRelationship rel) ->  {
+				System.out.println(rel.getTargetURI());
+					
+			}   );
+		} catch (InvalidFormatException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+        
         final int shapeId = 1;
 
         addSunburst(template, slide, null, sunburst, shapeId, "relId" + shapeId);
@@ -551,8 +665,8 @@ public class PowerPointServiceImpl implements PowerPointService {
         slide.getXmlObject()
         .getCSld()
         .getSpTree()
-        .addNewGraphicFrame().
-        set(template.getBarChartShapeXML(relId, shapeId, "chart" + shapeId, anchor));
+        .addNewGraphicFrame()
+        .set(template.getBarChartShapeXML(relId, shapeId, "chart" + shapeId, anchor));
 
     	
         /*Sheet created.. we need to set data in this sheet while we build the chart */
@@ -694,6 +808,19 @@ public class PowerPointServiceImpl implements PowerPointService {
         /*add a new graphic Frame */
         slide.getXmlObject().getCSld().getSpTree().addNewGraphicFrame().set(template.getDoughnutChartShapeXML(relId, shapeId, "chart" + shapeId, anchor));
 
+        
+        System.out.println("relations after");
+        try { 
+			PackageRelationshipCollection chartRelations = slide.getPackagePart().getRelationships();
+			chartRelations.forEach((PackageRelationship rel) ->  {
+				System.out.println(rel.getTargetURI());
+					
+			}   );
+		} catch (InvalidFormatException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+        
         /*Sheet created */
         final XSSFWorkbook workbook = new XSSFWorkbook();
         final XSSFSheet sheet = workbook.createSheet();
@@ -1598,8 +1725,7 @@ public class PowerPointServiceImpl implements PowerPointService {
             final CTNumRef timestampCatNumRef = series.getXVal().getNumRef();
             timestampCatNumRef.setF(new AreaReference(
                 new CellReference(sheetName, 1, 0, true, true),
-                new CellReference(sheetName, 1 + timestamps.length, 0, true, true),
-                SpreadsheetVersion.EXCEL2007
+                new CellReference(sheetName, 1 + timestamps.length, 0, true, true)
             ).formatAsString());
 
             final CTNumData timeStampCatNumCache = timestampCatNumRef.getNumCache();
@@ -1947,7 +2073,7 @@ public class PowerPointServiceImpl implements PowerPointService {
             
             if("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet".equals(contentType)) {
                 workbook.write(partCopy);
-                name = generateNewName(opcPackage, targetURI.getPath()+"_chart");
+                name = generateNewName(opcPackage, targetURI.getPath());
                 
                 opcPackage.createPart(name, contentType, partCopy);   //breaking here
                 chartPart.addRelationship(name, TargetMode.INTERNAL, part.getRelationship().getRelationshipType());

@@ -8,11 +8,17 @@ package com.hp.autonomy.frontend.reports.powerpoint;
 import java.awt.geom.Rectangle2D;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collector;
+import java.util.stream.Collectors;
+
 import javax.xml.namespace.QName;
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.poi.POIXMLDocumentPart;
+import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
+import org.apache.poi.openxml4j.opc.PackagePart;
 import org.apache.poi.xslf.usermodel.XMLSlideShow;
 import org.apache.poi.xslf.usermodel.XSLFChart;
 import org.apache.poi.xslf.usermodel.XSLFGraphicFrame;
@@ -46,7 +52,7 @@ class SlideShowTemplate {
     
     private final ImmutablePair<XSLFChart, CTGraphicalObjectFrame> pieChart;
 
-    SlideShowTemplate(final InputStream inputStream) throws TemplateLoadException {
+    SlideShowTemplate(final InputStream inputStream) throws TemplateLoadException, InvalidFormatException {
         try {
             // There should be a doughnut chart in slide 1 and a scatterplot chart in slide 2
             pptx = new XMLSlideShow(inputStream);
@@ -88,11 +94,50 @@ class SlideShowTemplate {
             pptx.removeSlide(2);
             pptx.removeSlide(1);
             pptx.removeSlide(0);
+            
+           
+            
+            removeEmbeddedExcelContent();
+            
+            
         }
         catch(IOException e) {
             throw new TemplateLoadException("Error while loading slide show", e);
-        }
+        } 
     }
+
+    
+    
+	private void removeEmbeddedExcelContent() throws InvalidFormatException {
+		
+		
+		ArrayList<PackagePart> partsToDelete = pptx.getPackage().getParts().stream().filter((PackagePart packagePart) ->  {
+			
+			String contentType = packagePart.getContentType() ;
+
+			
+			if("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet".equals(contentType )) {
+				
+				return true;
+			}
+			
+			return false;
+			
+		}).collect(Collectors.toCollection(ArrayList::new))	;
+		
+		
+		for(int i=0 ; i<partsToDelete.size(); i++) {
+			
+			pptx.getPackage().removePart(partsToDelete.get(i));
+			
+		}
+		
+		/*System.out.println("After deleting the unnecessary parts");
+		pptx.getPackage().getParts().forEach(  (PackagePart packagePart) ->  System.out.println(packagePart.getPartName().getName() + " " + packagePart.getContentType() )  );*/
+	}
+	
+	
+	
 
     /**
      * Get the doughnut chart from the first slide of the template. Do not modify this object.
