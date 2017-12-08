@@ -8,6 +8,7 @@ import java.io.InputStream;
 
 import javax.xml.namespace.QName;
 
+import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.poi.POIXMLDocumentPart;
 import org.apache.poi.xslf.usermodel.XMLSlideShow;
@@ -55,9 +56,16 @@ public class PowerPointChartUpdaterServiceImpl implements PowerPointChartUpdater
 			// get the chart from this slide
 			final ImmutablePair<XSLFChart, CTGraphicalObjectFrame> chartArtifact= getChart(slide);
 			
+			//check if the chart is really a pie chart or some other chart
+			if (ArrayUtils.isEmpty(chartArtifact.getLeft().getCTChart().getPlotArea().getPieChartArray())) {
+                throw new IllegalArgumentException("The slide has the wrong chart type, expected pie chart");
+            }
+			
 			//get the Excel workbook for this chart
 			final XSSFWorkbook workbook = getWorkBookOfChart(  chartArtifact.getLeft() ) ;
 			
+			
+			//this is a good place to test.
 			//now you can write the workbook with the new data and update cell references, then write back the workbook and the chart
 			
 			

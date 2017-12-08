@@ -1,6 +1,8 @@
 package com.hp.autonomy.frontend.reports.powerpoint;
 
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 
@@ -16,6 +18,20 @@ public class TestPPTGen {
 
 	public static void main(String[] args) throws Exception {
 
+		
+		PieChartData pieChartData = new PieChartData();
+		pieChartData.setChartLabel("My Pie Chart");
+		pieChartData.setCategories(new String[] { "apples", "oranges", "guavas" });
+		pieChartData.setSeries(new double[] { 60.0, 30.0, 10 });
+		
+		
+		
+		PowerPointChartUpdaterService chartUpdaterService = new PowerPointChartUpdaterServiceImpl();
+		chartUpdaterService.updateChart("E:\\SamplePPT.pptx", 2, pieChartData);
+		
+	}
+
+	private static void testChartGenerator() throws TemplateLoadException, IOException, FileNotFoundException {
 		PowerPointService pptxService = new PowerPointServiceImpl();
 
 		 final DategraphData dategraph = new DategraphData(
@@ -82,7 +98,7 @@ public class TestPPTGen {
 
 		// final XMLSlideShow pptx = pptxService.sunburst(bottomRightSunburst);
 		pptx.write(new FileOutputStream("E:\\genchart.pptx"));
-
+	
 	}
 
 }
