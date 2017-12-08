@@ -29,17 +29,19 @@ public class PowerPointChartUpdaterServiceImpl implements PowerPointChartUpdater
 	
 
 	@Override
-	public void updateChart(final String filePath, final int slideNumber, final ComposableElement composableElement) {
+	public XMLSlideShow updateChart(final String filePath, final int slideNumber, final ComposableElement composableElement) {
 		
 		if(composableElement instanceof PieChartData) {
-			updatePieChart(filePath,  slideNumber, (PieChartData) composableElement);
+			return updatePieChart(filePath,  slideNumber, (PieChartData) composableElement);
 		}
 		
-		
+		return null;
 		
 	}
 
-	private void updatePieChart(final String filePath, final int slideNumber, final PieChartData pieChartData) {
+	
+	//we should be returning back the new XMLSlideShow, so that the caller can choose to write it wherever they want to write it
+	private XMLSlideShow updatePieChart(final String filePath, final int slideNumber, final PieChartData pieChartData) {
 
 		try {
 			validateInput(filePath, slideNumber, pieChartData); // take care of all bad input.
@@ -57,14 +59,19 @@ public class PowerPointChartUpdaterServiceImpl implements PowerPointChartUpdater
 			final XSSFWorkbook workbook = getWorkBookOfChart(  chartArtifact.getLeft() ) ;
 			
 			//now you can write the workbook with the new data and update cell references, then write back the workbook and the chart
+			
+			
+			
+			
 					
 			
 			
 
 			// we are done updating the chart
 			workbook.close();
-			slideShow.close();
 			fileInputStream.close();
+			
+			return slideShow;
 
 		} catch (FileNotFoundException e) {
 			// TODO Auto-generated catch block
@@ -79,6 +86,8 @@ public class PowerPointChartUpdaterServiceImpl implements PowerPointChartUpdater
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+		
+		return null;
 
 	}
 
@@ -173,8 +182,6 @@ public class PowerPointChartUpdaterServiceImpl implements PowerPointChartUpdater
 		throw new ChartHasNoWorkBookException("This chart has no associated excel workbook");		
 		
 	}
-	
-	
 	
 	
 	
