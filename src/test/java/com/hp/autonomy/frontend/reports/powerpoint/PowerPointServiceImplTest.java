@@ -28,12 +28,16 @@ import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.runners.MockitoJUnitRunner;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static java.io.File.createTempFile;
 
 @RunWith(MockitoJUnitRunner.class)
 public class PowerPointServiceImplTest {
 
+	final static Logger logger = LoggerFactory.getLogger(PowerPointServiceImplTest.class) ;
+	
     private static final String sampleJPEGWithoutHeader = "/9j/4AAQSkZJRgABAQAASABIAAD/2wBDAAMCAgICAgMCAgIDAwMDBAYEBAQEBAgGBgUGCQgKCgkICQkKDA8MCgsOCwkJDRENDg8QEBEQCgwSExIQEw8QEBD/2wBDAQMDAwQDBAgEBAgQCwkLEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBD/wAARCAAeADIDASIAAhEBAxEB/8QAGQABAQEBAQEAAAAAAAAAAAAAAAcGBQQI/8QAJRAAAQQCAgICAgMAAAAAAAAAAQIDBAUABgcREiEIEyMxMkFR/8QAGAEBAQEBAQAAAAAAAAAAAAAAAAUDBgT/xAAjEQEAAQQBBAIDAAAAAAAAAAABEQACAwQhBRIxURNBBhax/9oADAMBAAIRAxEAPwD7NxjMtypuUrjzjjZN4hVC7N+jrX5qIqVBPmUJJ7USR0gfyUR78QroE9A9Zra+Tbz2a+Im69LT65WDl4Oa4KtTjIPK+X/HmswqJneIdjW2s+qiWdgwBHAgof8ASVFJf8nArorCWvtWEFJUB3msY5/06ZyY/wAWQa23k2UWUiHIkNIYLTTimg6CWy6JH1+JH5Q0W+/XllnN+LdYwDdfr3doXXT9dtqCj4Tkj2IkiUhqmYybcJcq2/KsTZ5VrqUqkFHsEyoYDpbIcQyso6JS4r8qSk+foJBUAkqAJyk5L39HN0zZu1dgC+3zCP1PkkpTGMZ46Uzl7VrlbuGs22pXAcMC6gv18r6leK/qdbKF+J/o9KPR/wBzqYzTFkvw3mTGxcMj6Tw0qTMfHHW4bsSTA3ndYchqBFrJ0iJZoju2kaMsqYRIW20CCgEoCmvrV4eiT7z2Xvx/1DZN8h79c3N9KfgWTFtGguyGnI7MlkDwLa1Nl9tHYCi0h0Nk/tPvKbjK/wCx9V7/AJPme6EniYYk8egD0AEAFJrJ6JxvUceythfpbO0eY2O1fuXosp1C2Y0h5RW79PSApKVKV2QpSv0Ous1mMZL2dnLuZXNnu7rmJfcEfwpTGMZhSv/Z";
     private static final String sampleJPEGImage = "data:image/jpeg;base64," + sampleJPEGWithoutHeader;
     private static final String samplePNGImage = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA8AAAAFCAIAAAAVLyF7AAAAPUlEQVQI14WNSQoAMAgDo/b/Lxamh9JiF+gcZJJDlCbA1z0zawXcvq5HhApmVr1GSa6d55NFO/IYA47VQQfmMSztMBTTBAAAAABJRU5ErkJggg==";
@@ -43,6 +47,7 @@ public class PowerPointServiceImplTest {
 
     @Before
     public void before() {
+    	
         pptxService = new PowerPointServiceImpl(
             TemplateSource.DEFAULT,
             // Keep 1% of left and right margin free, and 2% of top and bottom margin free
@@ -148,6 +153,7 @@ public class PowerPointServiceImplTest {
 
     @Test
     public void testDateGraphSingleAxis() throws TemplateLoadException, IOException {
+    	
         final DategraphData data = createSingleAxisDategraphData();
 
         final XMLSlideShow pptx = pptxService.graph(data);

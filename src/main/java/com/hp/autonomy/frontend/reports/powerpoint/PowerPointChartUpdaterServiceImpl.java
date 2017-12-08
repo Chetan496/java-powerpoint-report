@@ -5,20 +5,36 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Iterator;
 
 import javax.xml.namespace.QName;
 
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.poi.POIXMLDocumentPart;
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.util.CellRangeAddress;
 import org.apache.poi.xslf.usermodel.XMLSlideShow;
 import org.apache.poi.xslf.usermodel.XSLFChart;
 import org.apache.poi.xslf.usermodel.XSLFGraphicFrame;
 import org.apache.poi.xslf.usermodel.XSLFShape;
 import org.apache.poi.xslf.usermodel.XSLFSlide;
+import org.apache.poi.xssf.usermodel.XSSFCell;
 import org.apache.poi.xssf.usermodel.XSSFRelation;
+import org.apache.poi.xssf.usermodel.XSSFRow;
+import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.apache.xmlbeans.XmlObject;
+import org.openxmlformats.schemas.drawingml.x2006.chart.CTAxDataSource;
+import org.openxmlformats.schemas.drawingml.x2006.chart.CTNumData;
+import org.openxmlformats.schemas.drawingml.x2006.chart.CTNumDataSource;
+import org.openxmlformats.schemas.drawingml.x2006.chart.CTNumVal;
+import org.openxmlformats.schemas.drawingml.x2006.chart.CTPieChart;
+import org.openxmlformats.schemas.drawingml.x2006.chart.CTPieSer;
+import org.openxmlformats.schemas.drawingml.x2006.chart.CTSerTx;
+import org.openxmlformats.schemas.drawingml.x2006.chart.CTStrData;
+import org.openxmlformats.schemas.drawingml.x2006.chart.CTStrVal;
 import org.openxmlformats.schemas.presentationml.x2006.main.CTGraphicalObjectFrame;
 
 import com.hp.autonomy.frontend.reports.powerpoint.dto.ComposableElement;
@@ -63,15 +79,74 @@ public class PowerPointChartUpdaterServiceImpl implements PowerPointChartUpdater
 			
 			//get the Excel workbook for this chart
 			final XSSFWorkbook workbook = getWorkBookOfChart(  chartArtifact.getLeft() ) ;
+			final XSSFSheet sheet = workbook.getSheetAt(0);
+			
+			//the workbook is loading correctly
+			
+			//unwrap the data from the piechartdata sent
+			final String chartLabel = pieChartData.getChartLabel();
+			final double[] seriesValues = pieChartData.getSeries();
 			
 			
-			//this is a good place to test.
-			//now you can write the workbook with the new data and update cell references, then write back the workbook and the chart
+			final CTPieChart ctPieChart =
+					chartArtifact.getLeft().getCTChart().getPlotArea().getPieChartArray(0);
+			final CTPieSer ctPieSer = ctPieChart.getSerArray(0);
 			
 			
+			// update text for this series
+			CTSerTx tx = ctPieSer.getTx();
+			tx.getStrRef().getStrCache().getPtArray(0).setV(chartLabel);
+			sheet.getRow(0).getCell(1).setCellValue(chartLabel);
+			//we dont have to set the reference since its already there
 			
 			
-					
+			// category axis data
+			CTAxDataSource cat = ctPieSer.getCat();
+			CTStrData catData = cat.getStrRef().getStrCache();
+
+			// Values
+			CTNumDataSource val = ctPieSer.getVal();
+			CTNumData numData = val.getNumRef().getNumCache();
+			
+			
+			catData.setPtArray(null); // unset old axis text
+			numData.setPtArray(null); // unset old values
+			
+			int idx = 0;
+			int rownum = 1;
+
+			for (double seriesVal : seriesValues) {
+
+				CTNumVal numVal = numData.addNewPt();
+				numVal.setIdx(idx);
+				numVal.setV(new Double(seriesVal).toString());
+
+				String categoryLabel = pieChartData.getCategories()[idx];
+				CTStrVal sVal = catData.addNewPt();
+				sVal.setIdx(idx);
+				sVal.setV(categoryLabel);
+
+				XSSFRow row = createOrGetRow(sheet, rownum);
+				row.createCell(0).setCellValue(categoryLabel); //the cell may already exists
+				row.createCell(1).setCellValue(seriesVal);
+
+				idx++;
+				rownum++;
+
+			}
+			
+			numData.getPtCount().setVal(idx);
+			catData.getPtCount().setVal(idx);
+			
+			String numDataRange = new CellRangeAddress(1, rownum - 1, 1, 1).formatAsString(sheet.getSheetName(), true);
+			val.getNumRef().setF(numDataRange);
+
+			String axisDataRange = new CellRangeAddress(1, rownum - 1, 0, 0).formatAsString(sheet.getSheetName(), true);
+			cat.getStrRef().setF(axisDataRange);
+			
+			//we need to save this in chartPart of the XMLSlideShow
+			//the Excel workbook needs to be written back
+			//and the chartPart also needs to be written back.
 			
 			
 
@@ -100,6 +175,15 @@ public class PowerPointChartUpdaterServiceImpl implements PowerPointChartUpdater
 	}
 
 	
+	private static XSSFRow createOrGetRow(XSSFSheet sheet, int rownum) {
+
+		if (sheet.getRow(rownum) == null) {
+			return sheet.createRow(rownum);
+		}
+
+		return sheet.getRow(rownum);
+	}
+	
 	
 	private void validateInput(final String filePath, final int slideNumber, final PieChartData pieChartData) throws IOException {
 		
@@ -125,6 +209,13 @@ public class PowerPointChartUpdaterServiceImpl implements PowerPointChartUpdater
 			slideShow.close();
 			fileInputStream.close();
 			throw new IllegalArgumentException("slide number cannot be greater than number of slides");
+		}
+		
+		
+		if(!pieChartData.validateInput()) {
+			slideShow.close();
+			fileInputStream.close();
+			throw new IllegalStateException();
 		}
 		
 		slideShow.close();
@@ -190,6 +281,37 @@ public class PowerPointChartUpdaterServiceImpl implements PowerPointChartUpdater
 		throw new ChartHasNoWorkBookException("This chart has no associated excel workbook");		
 		
 	}
+	
+	
+	private void printRowsFromFirstSheet(XSSFWorkbook workbook) {
+		
+		
+		Iterator<Row> rows = workbook.getSheetAt(0).rowIterator();
+		while (rows.hasNext()) {
+		    XSSFRow row = (XSSFRow) rows.next();
+
+		    Iterator<Cell> cells = row.cellIterator();
+		    while (cells.hasNext()) {
+		        XSSFCell cell = (XSSFCell) cells.next();
+
+		        //Must do this, you need to get value based on the cell type
+		        switch (cell.getCellType()) {
+		            case XSSFCell.CELL_TYPE_NUMERIC:
+		                System.out.println(cell.getNumericCellValue());
+		            break;
+		            case XSSFCell.CELL_TYPE_STRING:
+		                System.out.println(cell.getStringCellValue());
+		            break;
+		            default: break;
+		        }
+		    }
+		}	
+		
+	}
+	
+	
+	
+	
 	
 	
 	
