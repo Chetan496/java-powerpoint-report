@@ -1755,6 +1755,7 @@ public class PowerPointServiceImpl implements PowerPointService {
 		final byte[] colorBytes = { (byte) color.getRed(), (byte) color.getGreen(), (byte) color.getBlue() };
 		fillClr.setVal(colorBytes);
 
+		
 		final CTMarker marker = series.getMarker();
 
 		if (marker != null) {
