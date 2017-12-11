@@ -12,9 +12,11 @@ import javax.xml.namespace.QName;
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.poi.POIXMLDocumentPart;
+import org.apache.poi.hssf.util.CellReference;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.util.CellRangeAddress;
+import org.apache.poi.util.IOUtils;
 import org.apache.poi.xslf.usermodel.XMLSlideShow;
 import org.apache.poi.xslf.usermodel.XSLFChart;
 import org.apache.poi.xslf.usermodel.XSLFGraphicFrame;
@@ -78,10 +80,9 @@ public class PowerPointChartUpdaterServiceImpl implements PowerPointChartUpdater
             }
 			
 			//get the Excel workbook for this chart
-			final XSSFWorkbook workbook = getWorkBookOfChart(  chartArtifact.getLeft() ) ;
-			final XSSFSheet sheet = workbook.getSheetAt(0);
+			final XSSFWorkbook workbook = new XSSFWorkbook() ;
+			final XSSFSheet sheet = workbook.createSheet("Data for Pie Chart");
 			
-			//the workbook is loading correctly
 			
 			//unwrap the data from the piechartdata sent
 			final String chartLabel = pieChartData.getChartLabel();
@@ -96,9 +97,10 @@ public class PowerPointChartUpdaterServiceImpl implements PowerPointChartUpdater
 			// update text for this series
 			CTSerTx tx = ctPieSer.getTx();
 			tx.getStrRef().getStrCache().getPtArray(0).setV(chartLabel);
-			sheet.getRow(0).getCell(1).setCellValue(chartLabel);
-			//we dont have to set the reference since its already there
-			
+			sheet.createRow(0).createCell(1).setCellValue(chartLabel);
+			String seriesRef = new CellReference(sheet.getSheetName(), 0,  1, true, true)
+					.formatAsString();
+			tx.getStrRef().setF(seriesRef);
 			
 			// category axis data
 			CTAxDataSource cat = ctPieSer.getCat();
@@ -146,7 +148,17 @@ public class PowerPointChartUpdaterServiceImpl implements PowerPointChartUpdater
 			
 			//we need to save this in chartPart of the XMLSlideShow
 			//the Excel workbook needs to be written back
-			//and the chartPart also needs to be written back.
+			XSLFChart chart = chartArtifact.getLeft();
+			
+			for (final POIXMLDocumentPart.RelationPart part : chart.getRelationParts()) {
+				final String contentType = part.getDocumentPart().getPackagePart().getContentType();
+				
+				if ("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet".equals(contentType)) {
+					 workbook.write(part.getDocumentPart().getPackagePart().getOutputStream()) ;
+					 break;
+				}
+				
+			}
 			
 			
 
@@ -165,10 +177,7 @@ public class PowerPointChartUpdaterServiceImpl implements PowerPointChartUpdater
 		} catch (SlideHasNoChartException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
-		} catch (ChartHasNoWorkBookException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+		} 
 		
 		return null;
 
@@ -267,6 +276,8 @@ public class PowerPointChartUpdaterServiceImpl implements PowerPointChartUpdater
 					InputStream inputStream = part.getDocumentPart().getPackagePart().getInputStream();
 					XSSFWorkbook workbook = new XSSFWorkbook(inputStream);
 					
+					
+					//we need to set all rows and column to null for this workbook.
 					return workbook;
 				} catch (IOException e) {
 					// TODO Auto-generated catch block

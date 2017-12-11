@@ -18,16 +18,18 @@ public class TestPPTGen {
 
 	public static void main(String[] args) throws Exception {
 
-		
 		PieChartData pieChartData = new PieChartData();
 		pieChartData.setChartLabel("My Pie Chart");
 		pieChartData.setCategories(new String[] { "apples", "oranges", "guavas" });
 		pieChartData.setSeries(new double[] { 60.0, 30.0, 10 });
 		
 		
-		
 		PowerPointChartUpdaterService chartUpdaterService = new PowerPointChartUpdaterServiceImpl();
-		chartUpdaterService.updateChart("E:\\SamplePPT.pptx", 2, pieChartData);
+		XMLSlideShow outPPTX = chartUpdaterService.updateChart("E:\\SamplePPT.pptx", 2, pieChartData);
+		 
+		
+		//you can choose to write to the same file.. so that it actually updates it.
+		outPPTX.write(new FileOutputStream("E:\\updatedChart.pptx"));
 		
 	}
 
