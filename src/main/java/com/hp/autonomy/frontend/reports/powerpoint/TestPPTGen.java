@@ -16,7 +16,7 @@ import com.hp.autonomy.frontend.reports.powerpoint.dto.SunburstData;
 
 public class TestPPTGen {
 
-	public static void main(String[] args) throws Exception {
+	public static void Test(String[] args) throws Exception {
 
 		PieChartData pieChartData = new PieChartData();
 		pieChartData.setChartLabel("My Pie Chart");
